@@ -33,42 +33,48 @@ JournalLM is a Python script that provides personalized insights based on your D
 ## Usage
 
 ```
-python journallm.py [output_filename] [options]
+python journallm.py [options]
 ```
 
 ### Command Line Options
 
-- `output_filename`: Optional output filename (default: auto-generated)
-- `--debug`: Enable debug logging
+- `--output PATH`: Output filename for advice (default: auto-generated)
+- `--input PATH`: Path to a local ZIP or JSON file containing journal entries (default: download from Google Drive)
+- `--save-journal [PATH]`: Output extracted journal (without this flag, the journal is not saved. If given without a path, the journal is saved with a default filename in the current directory.)
 - `--extract-only`: Only extract journal entries, don't prompt Claude
-- `--journal-file PATH`: Path to pre-extracted journal XML file (skips extraction)
-- `--local-file PATH`: Path to a local ZIP or JSON file containing journal entries
+- `--journal PATH`: Path to pre-extracted journal XML file (skips extraction)
+- `--debug`: Enable debug logging
 
 ### Examples
 
 Full process (extract journal from Google Drive and get insights):
 ```
-python journallm.py insights.md
+python journallm.py
 ```
 
 Extract journal entries only from Google Drive:
 ```
-python journallm.py journal.xml --extract-only
+python journallm.py --extract-only --save-journal journal.xml
+```
+
+Extract journal entries with auto-generated filename:
+```
+python journallm.py --extract-only --save-journal
 ```
 
 Process a local Day One backup ZIP file:
 ```
-python journallm.py insights.md --local-file DayOneBackup.zip
+python journallm.py --output insights.md --input DayOneBackup.zip
 ```
 
 Process a single JSON journal file:
 ```
-python journallm.py insights.md --local-file journal.json
+python journallm.py --output insights.md --input journal.json
 ```
 
 Get insights from a pre-extracted journal file:
 ```
-python journallm.py insights.md --journal-file journal.xml
+python journallm.py --output insights.md --journal journal.xml
 ```
 
 Enable debug logging:

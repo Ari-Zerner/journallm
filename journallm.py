@@ -84,13 +84,14 @@ class JournalLM:
         logger.info("Getting insights from Claude")
         return self.claude_prompter.get_insights(journal_xml)
     
-    def save_to_file(self, content: str, output_file: Optional[str] = None) -> str:
+    def save_to_file(self, content: str, output_file: Optional[str] = None, file_type: str = "advice") -> str:
         """
         Save content to a file
         
         Args:
             content: Content to save
             output_file: Optional filename for the output
+            file_type: Type of file being saved (for auto-generated filename)
             
         Returns:
             str: Path to the saved file
@@ -98,7 +99,10 @@ class JournalLM:
         # Generate output filename if not provided
         if not output_file:
             now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            output_file = f"advice-{now}.md"
+            if file_type == "journal":
+                output_file = f"journal-{now}.xml"
+            else:
+                output_file = f"advice-{now}.md"
         
         # Save the content to a file
         logger.info(f"Saving to {output_file}")
@@ -107,15 +111,18 @@ class JournalLM:
         
         return output_file
 
-    def run(self, output_file: Optional[str] = None, extract_only: bool = False, journal_file: Optional[str] = None, local_file: Optional[str] = None) -> None:
+    def run(self, output_file: Optional[str] = None, extract_only: bool = False, journal_file: Optional[str] = None, 
+            input_file: Optional[str] = None, save_journal: Optional[str] = None, should_save_journal: bool = False) -> None:
         """
         Run the JournalLM process
         
         Args:
-            output_file: Optional filename for the output
+            output_file: Optional filename for the insights output
             extract_only: If True, only extract journal entries and don't prompt Claude
             journal_file: Optional path to a pre-extracted journal XML file
-            local_file: Optional path to a local ZIP or JSON file containing journal entries
+            input_file: Optional path to a local ZIP or JSON file containing journal entries
+            save_journal: Optional path to save the extracted journal XML
+            should_save_journal: Flag indicating whether to save journal even if save_journal is None
         """
         try:
             # Get journal entries
@@ -132,10 +139,10 @@ class JournalLM:
                 except Exception as e:
                     logger.error(f"Error loading journal XML file: {str(e)}")
                     return
-            elif local_file:
+            elif input_file:
                 # Extract journal entries from local ZIP or JSON file
-                logger.info(f"Processing local file: {local_file}")
-                journal_xml = self.extract_journal_from_file(local_file)
+                logger.info(f"Processing local file: {input_file}")
+                journal_xml = self.extract_journal_from_file(input_file)
                 if not journal_xml:
                     logger.error("Failed to extract journal entries from local file")
                     return
@@ -147,17 +154,13 @@ class JournalLM:
                 logger.error("Failed to get journal entries")
                 return
             
-            # If extract_only, save the XML and exit
+            # Save the journal XML if requested or if should_save_journal flag is set
+            if save_journal is not None or should_save_journal:
+                self.save_to_file(journal_xml, save_journal, "journal")
+                logger.info(f"Journal XML saved")
+            
+            # If extract_only, exit after saving (if requested)
             if extract_only:
-                # Use backup time for filename if available
-                if backup_time:
-                    backup_time_str = backup_time.strftime("%Y%m%d-%H%M%S")
-                    xml_file = output_file if output_file else f"journal-{backup_time_str}.xml"
-                else:
-                    now = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                    xml_file = output_file if output_file else f"journal-{now}.xml"
-                
-                self.save_to_file(journal_xml, xml_file)
                 logger.info("Journal extraction completed successfully")
                 return
             
@@ -168,7 +171,7 @@ class JournalLM:
                 return
             
             # Save the insights to a file
-            self.save_to_file(insights, output_file)
+            self.save_to_file(insights, output_file, "advice")
             
             logger.info("JournalLM process completed successfully")
             
@@ -179,13 +182,14 @@ class JournalLM:
 def main():
     """Main entry point for the script"""
     parser = argparse.ArgumentParser(description="JournalLM - Get insights from your journal")
-    parser.add_argument("output_file", nargs="?", help="Output filename (default: auto-generated)")
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     
-    # Add flow control flags
+    # Update command line options to match README
+    parser.add_argument("--output", help="Output filename for advice (default: auto-generated)")
+    parser.add_argument("--input", help="Path to a local ZIP or JSON file containing journal entries (default: download from Google Drive)")
+    parser.add_argument("--save-journal", nargs='?', const=True, help="Output filename for journal (default: auto-generated if flag is given without a value)")
     parser.add_argument("--extract-only", action="store_true", help="Only extract journal entries, don't prompt Claude")
-    parser.add_argument("--journal-file", help="Path to pre-extracted journal XML file (skips extraction)")
-    parser.add_argument("--local-file", help="Path to a local ZIP or JSON file containing journal entries")
+    parser.add_argument("--journal", help="Path to pre-extracted journal XML file (skips extraction)")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     
     args = parser.parse_args()
     
@@ -219,15 +223,15 @@ def main():
         
         # Determine folder ID requirement
         folder_id = os.getenv("FOLDER_ID")
-        if not folder_id and not args.journal_file and not args.local_file:
-            logger.error("FOLDER_ID environment variable is required when not using --journal-file or --local-file")
+        if not folder_id and not args.journal and not args.input:
+            logger.error("FOLDER_ID environment variable is required when not using --journal or --input")
             return 1
         
         # Get credentials file path from environment
         credentials_path = os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json")
         
         # Check if credentials file exists when needed
-        if not args.journal_file and not args.local_file and not os.path.exists(credentials_path):
+        if not args.journal and not args.input and not os.path.exists(credentials_path):
             logger.error(f"Credentials file not found: {credentials_path}")
             logger.info("Please follow these steps to get your credentials.json file:")
             logger.info("1. Go to https://console.cloud.google.com/")
@@ -241,16 +245,29 @@ def main():
         # Initialize JournalLM
         journallm = JournalLM(
             api_key=api_key,
-            folder_id=folder_id if not (args.journal_file or args.local_file) else None,
-            credentials_path=credentials_path if not (args.journal_file or args.local_file) else None
+            folder_id=folder_id if not (args.journal or args.input) else None,
+            credentials_path=credentials_path if not (args.journal or args.input) else None
         )
+        
+        # Handle the save_journal argument
+        save_journal_path = None
+        should_save_journal = False
+        
+        if args.save_journal:
+            if args.save_journal is True:  # Flag was given without a value
+                should_save_journal = True
+                save_journal_path = None
+            else:  # Flag was given with a value
+                save_journal_path = args.save_journal
         
         # Run the process
         journallm.run(
-            output_file=args.output_file,
+            output_file=args.output,
             extract_only=args.extract_only,
-            journal_file=args.journal_file,
-            local_file=args.local_file
+            journal_file=args.journal,
+            input_file=args.input,
+            save_journal=save_journal_path,
+            should_save_journal=should_save_journal
         )
         
         return 0
