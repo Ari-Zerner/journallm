@@ -259,11 +259,9 @@ class JournalExtractor:
             # Create the root element
             root = ET.Element("journal")
             
-            # Get entries and reverse them (newest last)
+            # Get entries
             entries = journal_data.get('entries', [])
             logger.debug(f"Processing {len(entries)} journal entries")
-            entries.reverse()
-            logger.debug("Entries reversed (oldest first, newest last)")
             
             # Process each entry
             for i, entry in enumerate(entries):
