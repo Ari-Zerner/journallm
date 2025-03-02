@@ -64,22 +64,32 @@ Focus on identifying patterns, suggesting improvements, and offering actionable 
 {journal_xml}
 
 <instructions>
-Based on my journal entries above, please provide:
+Please format your entire response in Markdown, with clear sections and thoughtful analysis. Because the whole response is markdown, there's no need to include ```markdown blocks.
+Based on my journal entries above, please provide the following sections:
 
-1. An executive summary for today, two short paragraphs max, noting recent developments and focusing on actionable advice
-2. General insights about me, my patterns, and my current state of mind
-3. Specific suggestions for preparations or next steps based on my apparent plans or goals
-4. Advice for things I might be overlooking or should consider
-5. Any other observations that might be helpful for my growth and well-being
-6. A journal entry template titled 'Context for JournalLM' for me to fill out in order to provide missing context (e.g. my relation to specific names I've mentioned), as well as any other information that would be helpful for your next analysis.
+## Executive Summary
+An executive summary for today, two short paragraphs max, noting recent developments and focusing on actionable advice
+
+## General Insights
+General insights about me, my patterns, and my current state of mind
+
+## Specific Suggestions
+Specific suggestions for preparations or next steps based on my apparent plans or goals
+
+## Overlooked Considerations
+Advice for things I might be overlooking or should consider
+
+## Other Observations
+Any other observations that might be helpful for my growth and well-being
+
+## Context for JournalLM
+A journal entry template for me to fill out in order to provide missing context (e.g. my relation to specific names I've mentioned), as well as any other information that would be helpful for your next analysis.
    This should be a one-off entry where I answer specific questions you have, not a generic template. Make it as convenient as possible for me to fill out:
    - don't ask for information you can already find in the journal entries
    - have a clearly defined space for each answer
    - aim for questions with short, concrete answers when possible
    - avoid making me write out long answers unless absolutely necessary
    - leave blank spaces rather than including placeholder text
-
-Please format your entire response in Markdown, with clear sections and thoughtful analysis.
 </instructions>
 """
         logger.debug(f"User prompt created, total length: {len(prompt)} characters")
