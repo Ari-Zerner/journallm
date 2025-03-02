@@ -42,17 +42,28 @@ python journallm.py [output_filename] [options]
 - `--debug`: Enable debug logging
 - `--extract-only`: Only extract journal entries, don't prompt Claude
 - `--journal-file PATH`: Path to pre-extracted journal XML file (skips extraction)
+- `--local-file PATH`: Path to a local ZIP or JSON file containing journal entries
 
 ### Examples
 
-Full process (extract journal and get insights):
+Full process (extract journal from Google Drive and get insights):
 ```
 python journallm.py insights.md
 ```
 
-Extract journal entries only:
+Extract journal entries only from Google Drive:
 ```
 python journallm.py journal.xml --extract-only
+```
+
+Process a local Day One backup ZIP file:
+```
+python journallm.py insights.md --local-file DayOneBackup.zip
+```
+
+Process a single JSON journal file:
+```
+python journallm.py insights.md --local-file journal.json
 ```
 
 Get insights from a pre-extracted journal file:
@@ -67,15 +78,42 @@ python journallm.py --debug
 
 ## How It Works
 
-1. The script connects to Google Drive and downloads the most recent Day One backup
-2. It extracts journal entries from the backup and processes them into a structured format
+1. The script can:
+   - Connect to Google Drive and download the most recent Day One backup
+   - Process a local Day One backup ZIP file
+   - Process a single JSON journal file
+   - Use a pre-extracted journal XML file
+2. It extracts journal entries and processes them into a structured XML format
 3. The entries are sent to Claude AI with a carefully designed prompt
 4. Claude analyzes your journal and provides personalized insights and advice
 5. The response is saved as a markdown file for you to review
 
+## XML Format
+
+When processing journal entries, JournalLM creates an XML structure with the following format:
+
+```xml
+<journals>
+  <journal name="journal-name-1">
+    <entry>
+      <created>2023-01-01T12:00:00Z</created>
+      <modified>2023-01-01T12:00:00Z</modified>
+      <loc>Location information</loc>
+      <text>Journal entry text</text>
+    </entry>
+    <!-- More entries -->
+  </journal>
+  <journal name="journal-name-2">
+    <!-- Entries for second journal -->
+  </journal>
+</journals>
+```
+
+The journal name is derived from the JSON filename (without extension).
+
 ## Authentication
 
-The first time you run the application, it will open a browser window asking you to authorize access to your Google Drive. After authorization, a token will be saved to `token.json` in the project directory, so you won't need to authorize again unless the token expires.
+The first time you run the application with Google Drive, it will open a browser window asking you to authorize access to your Google Drive. After authorization, a token will be saved to `token.json` in the project directory, so you won't need to authorize again unless the token expires.
 
 ## Troubleshooting
 
@@ -101,3 +139,10 @@ If you see an error like `No Day One backup files found in the folder`:
 1. Check that your FOLDER_ID is correct
 2. Verify that the folder contains Day One backup files (they should have "Day One" in the name and end with ".zip")
 3. Run with `--debug` flag to see more detailed information about the files in the folder
+
+### Invalid local file
+If you see an error processing a local file:
+1. Make sure the file exists and is readable
+2. Verify that it's a valid ZIP file containing JSON files or a valid JSON file
+3. Check that the JSON structure matches the expected Day One format
+4. Run with `--debug` flag to see more detailed error information

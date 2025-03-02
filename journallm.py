@@ -25,40 +25,47 @@ class JournalLM:
     """
     Main class for JournalLM application
     """
-    def __init__(self, folder_id: str, api_key: str, credentials_path: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, folder_id: Optional[str] = None, credentials_path: Optional[str] = None):
         """
         Initialize JournalLM
         
         Args:
-            folder_id: Google Drive folder ID containing Day One backups
-            api_key: Anthropic API key
+            api_key: Anthropic API key (optional when extract_only is True)
+            folder_id: Google Drive folder ID containing Day One backups (optional when using local_file)
             credentials_path: Path to the credentials.json file downloaded from Google Cloud Console
         """
         # Get credentials file path from environment if not provided
         if not credentials_path:
             credentials_path = os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json")
         
-        # Check if credentials file exists
-        if not os.path.exists(credentials_path):
-            logger.error(f"Credentials file not found: {credentials_path}")
-            raise FileNotFoundError(f"Credentials file not found: {credentials_path}")
+        # Initialize journal extractor
+        self.journal_extractor = JournalExtractor(folder_id, credentials_path if folder_id else None)
         
-        logger.debug(f"Using credentials file: {credentials_path}")
-        logger.debug(f"Using folder ID: {folder_id}")
-        
-        # Initialize components
-        self.journal_extractor = JournalExtractor(folder_id, credentials_path)
-        self.claude_prompter = ClaudePrompter(api_key)
+        # Initialize Claude prompter if API key is provided
+        self.claude_prompter = ClaudePrompter(api_key) if api_key else None
 
-    def extract_journal(self):
+    def extract_journal_from_drive(self):
         """
-        Extract journal entries from Day One backup
+        Extract journal entries from Day One backup in Google Drive
         
         Returns:
             Tuple of (str or None, datetime or None): XML representation of the journal entries and backup creation time
         """
-        logger.info("Extracting journal entries")
+        logger.info("Extracting journal entries from Google Drive")
         return self.journal_extractor.extract_journal()
+    
+    def extract_journal_from_file(self, file_path: str):
+        """
+        Extract journal entries from a local file (ZIP or JSON)
+        
+        Args:
+            file_path: Path to the local file
+            
+        Returns:
+            str or None: XML representation of the journal entries
+        """
+        logger.info(f"Extracting journal entries from local file: {file_path}")
+        return self.journal_extractor.extract_from_local_file(file_path)
     
     def get_insights(self, journal_xml: str) -> Optional[str]:
         """
@@ -70,6 +77,10 @@ class JournalLM:
         Returns:
             str or None: Claude's response with insights
         """
+        if not self.claude_prompter:
+            logger.error("Claude prompter not initialized (API key not provided)")
+            return None
+            
         logger.info("Getting insights from Claude")
         return self.claude_prompter.get_insights(journal_xml)
     
@@ -96,7 +107,7 @@ class JournalLM:
         
         return output_file
 
-    def run(self, output_file: Optional[str] = None, extract_only: bool = False, journal_file: Optional[str] = None) -> None:
+    def run(self, output_file: Optional[str] = None, extract_only: bool = False, journal_file: Optional[str] = None, local_file: Optional[str] = None) -> None:
         """
         Run the JournalLM process
         
@@ -104,6 +115,7 @@ class JournalLM:
             output_file: Optional filename for the output
             extract_only: If True, only extract journal entries and don't prompt Claude
             journal_file: Optional path to a pre-extracted journal XML file
+            local_file: Optional path to a local ZIP or JSON file containing journal entries
         """
         try:
             # Get journal entries
@@ -111,18 +123,25 @@ class JournalLM:
             backup_time = None
             
             if journal_file:
-                # Load journal entries from file
-                logger.info(f"Loading journal entries from {journal_file}")
+                # Load journal entries from XML file
+                logger.info(f"Loading journal entries from XML file: {journal_file}")
                 try:
                     with open(journal_file, 'r', encoding='utf-8') as f:
                         journal_xml = f.read()
-                    logger.debug(f"Loaded {len(journal_xml)} bytes from journal file")
+                    logger.debug(f"Loaded {len(journal_xml)} bytes from journal XML file")
                 except Exception as e:
-                    logger.error(f"Error loading journal file: {str(e)}")
+                    logger.error(f"Error loading journal XML file: {str(e)}")
+                    return
+            elif local_file:
+                # Extract journal entries from local ZIP or JSON file
+                logger.info(f"Processing local file: {local_file}")
+                journal_xml = self.extract_journal_from_file(local_file)
+                if not journal_xml:
+                    logger.error("Failed to extract journal entries from local file")
                     return
             else:
-                # Extract journal entries
-                journal_xml, backup_time = self.extract_journal()
+                # Extract journal entries from Google Drive
+                journal_xml, backup_time = self.extract_journal_from_drive()
             
             if not journal_xml:
                 logger.error("Failed to get journal entries")
@@ -166,6 +185,7 @@ def main():
     # Add flow control flags
     parser.add_argument("--extract-only", action="store_true", help="Only extract journal entries, don't prompt Claude")
     parser.add_argument("--journal-file", help="Path to pre-extracted journal XML file (skips extraction)")
+    parser.add_argument("--local-file", help="Path to a local ZIP or JSON file containing journal entries")
     
     args = parser.parse_args()
     
@@ -191,22 +211,23 @@ def main():
                 logger.info("API_KEY=your_anthropic_api_key")
                 return 1
         
-        # Get environment variables
-        folder_id = os.getenv("FOLDER_ID")
-        if not folder_id and not args.journal_file:
-            logger.error("FOLDER_ID environment variable is required when not using --journal-file")
-            return 1
-        
-        api_key = os.getenv("API_KEY")
+        # Determine API key requirement
+        api_key = os.getenv("API_KEY") if not args.extract_only else None
         if not api_key and not args.extract_only:
             logger.error("API_KEY environment variable is required when not using --extract-only")
+            return 1
+        
+        # Determine folder ID requirement
+        folder_id = os.getenv("FOLDER_ID")
+        if not folder_id and not args.journal_file and not args.local_file:
+            logger.error("FOLDER_ID environment variable is required when not using --journal-file or --local-file")
             return 1
         
         # Get credentials file path from environment
         credentials_path = os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json")
         
         # Check if credentials file exists when needed
-        if not args.journal_file and not os.path.exists(credentials_path):
+        if not args.journal_file and not args.local_file and not os.path.exists(credentials_path):
             logger.error(f"Credentials file not found: {credentials_path}")
             logger.info("Please follow these steps to get your credentials.json file:")
             logger.info("1. Go to https://console.cloud.google.com/")
@@ -219,16 +240,17 @@ def main():
         
         # Initialize JournalLM
         journallm = JournalLM(
-            folder_id=folder_id if not args.journal_file else "not_used",
-            api_key=api_key if not args.extract_only else "not_used",
-            credentials_path=credentials_path if not args.journal_file else None
+            api_key=api_key,
+            folder_id=folder_id if not (args.journal_file or args.local_file) else None,
+            credentials_path=credentials_path if not (args.journal_file or args.local_file) else None
         )
         
         # Run the process
         journallm.run(
             output_file=args.output_file,
             extract_only=args.extract_only,
-            journal_file=args.journal_file
+            journal_file=args.journal_file,
+            local_file=args.local_file
         )
         
         return 0
