@@ -9,7 +9,15 @@ JournalLM is a Python script that provides personalized insights based on your D
    ```
    pip install -r requirements.txt
    ```
-3. Set up Google Drive API:
+3. Create a `.env` file based on the `.env.example` template.
+4. Get an Anthropic API key:
+   - Sign up at [Anthropic](https://www.anthropic.com/)
+   - Create an API key and add it to your `.env` file
+
+### Optional: Google Drive Setup
+If you want to automatically download Day One backups from Google Drive:
+
+1. Set up Google Drive API:
    - Go to the [Google Cloud Console](https://console.cloud.google.com/)
    - Create a new project
    - Enable the Google Drive API
@@ -21,14 +29,11 @@ JournalLM is a Python script that provides personalized insights based on your D
      - Select "Desktop app" as the application type
      - Download the credentials JSON file
      - Save the file as `credentials.json` in the project directory (or another location)
-4. Create a `.env` file based on the `.env.example` template.
-5. Find your Google Drive folder ID:
+2. Find your Google Drive folder ID:
    - Navigate to your Day One backups folder in Google Drive
    - The folder ID is the part of the URL after "folders/" when you open the folder
    - Example: In `https://drive.google.com/drive/folders/1a2b3c4d5e6f7g8h9i`, the folder ID is `1a2b3c4d5e6f7g8h9i`
-6. Get an Anthropic API key:
-   - Sign up at [Anthropic](https://www.anthropic.com/)
-   - Create an API key and add it to your `.env` file
+3. Add the folder ID and credentials file path to your `.env` file
 
 ## Usage
 
