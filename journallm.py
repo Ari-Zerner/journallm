@@ -195,7 +195,7 @@ class JournalLM:
                 return
             
             # Save the journal XML if requested or if should_save_journal flag is set
-            if save_journal is not None or should_save_journal:
+            if save_journal is not None or should_save_journal or extract_only:
                 self.save_to_file(journal_xml, save_journal, "journal")
                 logger.info(f"Journal XML saved")
             
@@ -232,7 +232,7 @@ def main():
     # Other options
     parser.add_argument("--output", help="Output filename for advice (default: auto-generated)")
     parser.add_argument("--save-journal", nargs='?', const=True, help="Output filename for journal (default: auto-generated if flag is given without a value)")
-    parser.add_argument("--extract-only", action="store_true", help="Only extract journal entries, don't prompt Claude")
+    parser.add_argument("--extract-only", action="store_true", help="Only extract journal entries, don't prompt Claude (implies --save-journal)")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     
     args = parser.parse_args()

@@ -46,8 +46,8 @@ python journallm.py [input_file] [options]
 - `input_file`: Path to a local ZIP or JSON file containing journal entries (optional)
 - `--google-drive`: Download the latest backup from Google Drive instead of using a local file
 - `--output PATH`: Output filename for advice (default: auto-generated)
-- `--save-journal [PATH]`: Output extracted journal (without this flag, the journal is not saved. If given without a path, the journal is saved with a default filename in the current directory.)
-- `--extract-only`: Only extract journal entries, don't prompt Claude
+- `--save-journal [PATH]`: Output filename for journal (default: auto-generated if flag is given without a value)
+- `--extract-only`: Only extract journal entries, don't prompt Claude (implies --save-journal)
 - `--journal PATH`: Path to pre-extracted journal XML file (skips extraction)
 - `--debug`: Enable debug logging
 
@@ -68,14 +68,14 @@ Download and process the latest backup from Google Drive:
 python journallm.py --google-drive
 ```
 
-Extract journal entries only from a local file:
+Extract journal entries only from a local file (automatically saves the journal):
 ```
-python journallm.py DayOneBackup.zip --extract-only --save-journal journal.xml
+python journallm.py DayOneBackup.zip --extract-only
 ```
 
-Extract journal entries from Google Drive with auto-generated filename:
+Extract journal entries from Google Drive with a specific output filename:
 ```
-python journallm.py --google-drive --extract-only --save-journal
+python journallm.py --google-drive --extract-only --save-journal my-journal.xml
 ```
 
 Get insights from a pre-extracted journal file:
