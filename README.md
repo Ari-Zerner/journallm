@@ -38,13 +38,14 @@ If you want to automatically download Day One backups from Google Drive:
 ## Usage
 
 ```
-python journallm.py [options]
+python journallm.py [input_file] [options]
 ```
 
 ### Command Line Options
 
+- `input_file`: Path to a local ZIP or JSON file containing journal entries (optional)
+- `--google-drive`: Download the latest backup from Google Drive instead of using a local file
 - `--output PATH`: Output filename for advice (default: auto-generated)
-- `--input PATH`: Path to a local ZIP or JSON file containing journal entries (default: download from Google Drive)
 - `--save-journal [PATH]`: Output extracted journal (without this flag, the journal is not saved. If given without a path, the journal is saved with a default filename in the current directory.)
 - `--extract-only`: Only extract journal entries, don't prompt Claude
 - `--journal PATH`: Path to pre-extracted journal XML file (skips extraction)
@@ -52,34 +53,34 @@ python journallm.py [options]
 
 ### Examples
 
-Full process (extract journal from Google Drive and get insights):
-```
-python journallm.py
-```
-
-Extract journal entries only from Google Drive:
-```
-python journallm.py --extract-only --save-journal journal.xml
-```
-
-Extract journal entries with auto-generated filename:
-```
-python journallm.py --extract-only --save-journal
-```
-
 Process a local Day One backup ZIP file:
 ```
-python journallm.py --output insights.md --input DayOneBackup.zip
+python journallm.py DayOneBackup.zip
 ```
 
 Process a single JSON journal file:
 ```
-python journallm.py --output insights.md --input journal.json
+python journallm.py journal.json
+```
+
+Download and process the latest backup from Google Drive:
+```
+python journallm.py --google-drive
+```
+
+Extract journal entries only from a local file:
+```
+python journallm.py DayOneBackup.zip --extract-only --save-journal journal.xml
+```
+
+Extract journal entries from Google Drive with auto-generated filename:
+```
+python journallm.py --google-drive --extract-only --save-journal
 ```
 
 Get insights from a pre-extracted journal file:
 ```
-python journallm.py --output insights.md --journal journal.xml
+python journallm.py --journal journal.xml --output insights.md
 ```
 
 Enable debug logging:
@@ -90,9 +91,9 @@ python journallm.py --debug
 ## How It Works
 
 1. The script can:
-   - Connect to Google Drive and download the most recent Day One backup
    - Process a local Day One backup ZIP file
    - Process a single JSON journal file
+   - Connect to Google Drive and download the most recent Day One backup
    - Use a pre-extracted journal XML file
 2. It extracts journal entries and processes them into a structured XML format
 3. The entries are sent to Claude AI with a carefully designed prompt
