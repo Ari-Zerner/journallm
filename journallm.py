@@ -245,20 +245,6 @@ def main():
     )
     
     try:
-        # Check if .env file exists
-        if not os.path.exists(".env"):
-            if os.path.exists(".env.example"):
-                logger.error(".env file not found")
-                logger.info("Please create a .env file based on the .env.example template")
-                return 1
-            else:
-                logger.error("Neither .env nor .env.example files found")
-                logger.info("Please create a .env file with the following content:")
-                logger.info("FOLDER_ID=your_google_drive_folder_id_containing_dayone_backups")
-                logger.info("GOOGLE_CREDENTIALS_FILE=path/to/credentials.json")
-                logger.info("API_KEY=your_anthropic_api_key")
-                return 1
-        
         # Determine API key requirement
         api_key = os.getenv("API_KEY") if not args.extract_only else None
         if not api_key and not args.extract_only:
