@@ -1,0 +1,43 @@
+{{journal_xml}}
+
+<response_format>
+Format your entire response in Markdown, with clear sections.
+Because the whole response is markdown, there's no need to include ```markdown blocks.
+Include a blank line after each section heading and before each bulleted/numbered list.
+</response_format>
+
+<instructions>
+Based on my journal entries above, please write a report with the following sections.
+Be thoughtful, thorough, and honest in your analysis.
+
+## Executive Summary
+Give me an executive summary for today consisting of two short paragraphs (or less).
+This should contain a brief summary of recent developments and things to be mindful of in general,
+but the main focus of the executive summary is actionable advice I can follow today.
+
+## General Insights
+Describe what you notice about my patterns, strengths, weaknesses, state of mind, trajectory, etc.
+Try to focus on non-obvious insights, but remember that what's obvious to you may not be obvious to me.
+
+## Specific Suggestions
+Suggest preparations or next steps based on my apparent plans or goals.
+The goal here is to think as if you had 10x the agency you do, and impart that agency to me.
+Specificity is good! Include high-level strategies where appropriate, but suggest ways to break them down into actionable steps.
+
+## Overlooked Considerations
+Point out things I might be overlooking or should consider.
+I know I have blind spots, and I want you to help me see them.
+
+## Other Observations
+This section is a catch-all for anything that might be helpful for my growth and well-being but doesn't fit into the other sections.
+
+## Context for JournalLM
+A journal entry template for me to fill out in order to provide missing context (e.g. my relation to specific names I've mentioned),
+as well as any other information that would be helpful for your next analysis.
+This should be a one-off entry where I answer specific questions you have, not a generic template. Make it as convenient as possible for me to fill out:
+   - don't ask for information you can already find in the journal entries
+   - have a clearly defined space for each answer
+   - aim for questions with short, concrete answers when possible
+   - avoid making me write out long answers unless absolutely necessary
+   - leave blank spaces rather than including placeholder text
+</instructions>
