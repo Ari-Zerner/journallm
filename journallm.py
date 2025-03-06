@@ -9,6 +9,7 @@ import sys
 import datetime
 import argparse
 import logging
+import subprocess
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -132,11 +133,65 @@ class JournalLM:
         
         return output_file
 
+    def add_to_day_one(self, content: str, journal_name: Optional[str] = None) -> bool:
+        """
+        Add the content as a new entry in Day One using the CLI
+        
+        Args:
+            content: Content to add to Day One
+            journal_name: Optional name of the journal to add the entry to
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # Check if the Day One CLI is installed
+            try:
+                subprocess.run(["dayone2", "-h"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+            except FileNotFoundError:
+                logger.error("Day One CLI not found. Please install it first:")
+                logger.error("sudo bash /Applications/Day\\ One.app/Contents/Resources/install_cli.sh")
+                return False
+            
+            # Prepare the command
+            cmd = ["dayone2"]
+            
+            # Add journal option if specified
+            if journal_name:
+                cmd.extend(["--journal", journal_name])
+            
+            # Add the new command
+            cmd.append("new")
+            
+            # Run the command and pipe the content to stdin
+            logger.info(f"Adding entry to Day One{' journal: ' + journal_name if journal_name else ''}")
+            process = subprocess.run(
+                cmd, 
+                input=content.encode('utf-8'), 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.PIPE
+            )
+            
+            if process.returncode != 0:
+                error_msg = process.stderr.decode('utf-8').strip()
+                if "journal not found" in error_msg.lower():
+                    logger.error(f"Journal '{journal_name}' not found in Day One")
+                else:
+                    logger.error(f"Error adding entry to Day One: {error_msg}")
+                return False
+            
+            logger.info("Successfully added entry to Day One")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error adding entry to Day One: {str(e)}")
+            return False
+
     def run(self, input_file: Optional[str] = None, google_drive: bool = False, 
             output_file: Optional[str] = None, extract_only: bool = False, 
             journal_file: Optional[str] = None, save_journal: Optional[str] = None, 
             should_save_journal: bool = False, folder_id: Optional[str] = None,
-            credentials_path: Optional[str] = None) -> None:
+            credentials_path: Optional[str] = None, add_to_journal: Optional[str] = None) -> None:
         """
         Run the JournalLM process
         
@@ -150,6 +205,7 @@ class JournalLM:
             should_save_journal: Flag indicating whether to save journal even if save_journal is None
             folder_id: Google Drive folder ID containing Day One backups (required if google_drive is True)
             credentials_path: Path to the credentials.json file (required if google_drive is True)
+            add_to_journal: Optional name of the Day One journal to add the insights to
         """
         try:
             # Get journal entries
@@ -211,7 +267,14 @@ class JournalLM:
                 return
             
             # Save the insights to a file
-            self.save_to_file(insights, output_file, "advice")
+            output_path = self.save_to_file(insights, output_file, "advice")
+            
+            # Add to Day One if requested
+            if add_to_journal is not None:
+                # If add_to_journal is True (flag without value), use None to indicate default journal
+                journal_name = None if add_to_journal is True else add_to_journal
+                if not self.add_to_day_one(insights, journal_name):
+                    logger.warning("Failed to add entry to Day One")
             
             logger.info("JournalLM process completed successfully")
             
@@ -234,6 +297,7 @@ def main():
     parser.add_argument("--save-journal", nargs='?', const=True, help="Output filename for journal (default: auto-generated if flag is given without a value)")
     parser.add_argument("--extract-only", action="store_true", help="Only extract journal entries, don't prompt Claude (implies --save-journal)")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument("--add-to-journal", nargs='?', const=True, help="Add the generated report to Day One (optionally specify journal name)")
     
     args = parser.parse_args()
     
@@ -296,7 +360,8 @@ def main():
             save_journal=save_journal_path,
             should_save_journal=should_save_journal,
             folder_id=folder_id if args.google_drive else None,
-            credentials_path=credentials_path if args.google_drive else None
+            credentials_path=credentials_path if args.google_drive else None,
+            add_to_journal=args.add_to_journal
         )
         
         return 0

@@ -35,6 +35,19 @@ If you want to automatically download Day One backups from Google Drive:
    - Example: In `https://drive.google.com/drive/folders/1a2b3c4d5e6f7g8h9i`, the folder ID is `1a2b3c4d5e6f7g8h9i`
 3. Add the folder ID and credentials file path to your `.env` file
 
+### Optional: Day One CLI Setup (macOS only)
+If you want to add the generated insights directly to your Day One journal:
+
+1. Install the Day One CLI:
+   ```
+   sudo bash /Applications/Day\ One.app/Contents/Resources/install_cli.sh
+   ```
+   Note: You may need to enter your macOS device login password.
+2. Verify the installation:
+   ```
+   dayone2 -h
+   ```
+
 ## Usage
 
 ```
@@ -49,6 +62,7 @@ python journallm.py [input_file] [options]
 - `--save-journal [PATH]`: Output filename for journal (default: auto-generated if flag is given without a value)
 - `--extract-only`: Only extract journal entries, don't prompt Claude (implies --save-journal)
 - `--journal PATH`: Path to pre-extracted journal XML file (skips extraction)
+- `--add-to-journal [JOURNAL]`: Add the generated report to Day One in the specified journal or the default journal if not specified (see Day One CLI Setup)
 - `--debug`: Enable debug logging
 
 ### Examples
@@ -83,6 +97,16 @@ Get insights from a pre-extracted journal file:
 python journallm.py --journal journal.xml --output insights.md
 ```
 
+Add the generated insights to Day One (default journal):
+```
+python journallm.py DayOneBackup.zip --add-to-journal
+```
+
+Add the generated insights to a specific Day One journal:
+```
+python journallm.py DayOneBackup.zip --add-to-journal "JournalLM Reports"
+```
+
 Enable debug logging:
 ```
 python journallm.py --debug
@@ -99,6 +123,7 @@ python journallm.py --debug
 3. The entries are sent to Claude AI with a carefully designed prompt
 4. Claude analyzes your journal and provides personalized insights and advice
 5. The response is saved as a markdown file for you to review
+6. Optionally, the response can be added directly to your Day One journal
 
 ## XML Format
 
@@ -158,3 +183,15 @@ If you see an error processing a local file:
 2. Verify that it's a valid ZIP file containing JSON files or a valid JSON file
 3. Check that the JSON structure matches the expected Day One format
 4. Run with `--debug` flag to see more detailed error information
+
+### Day One CLI not found
+If you see an error like `Day One CLI not found` when using `--add-to-journal`:
+1. Make sure Day One app is installed on your Mac
+2. Install the CLI tool by running: `sudo bash /Applications/Day\ One.app/Contents/Resources/install_cli.sh`
+3. Verify the installation by running: `dayone2 -h`
+
+### Journal not found in Day One
+If you see an error like `Journal not found in Day One`:
+1. Make sure you've specified the correct journal name (case-sensitive)
+2. Open Day One app and verify the journal exists
+3. If you're unsure of the journal name, try using `--add-to-journal` without specifying a journal name to use the default journal
