@@ -83,7 +83,7 @@ class ClaudePrompter:
         logger.debug(f"User prompt created, total length: {len(prompt)} characters")
         return prompt
 
-    def get_insights(self, journal_xml: str) -> Optional[str]:
+    def get_report(self, journal_xml: str) -> Optional[str]:
         """
         Get insights from Claude based on journal entries
         
@@ -93,6 +93,7 @@ class ClaudePrompter:
         Returns:
             str or None: Claude's response with insights
         """
+        # TODO: Implement prompt caching to optimize costs when reusing the report in interactive mode
         try:
             logger.debug("Preparing to send request to Claude")
             system_prompt = self.get_system_prompt()
@@ -127,3 +128,44 @@ class ClaudePrompter:
             logger.error(f"Error getting insights from Claude: {str(e)}")
             logger.debug(traceback.format_exc())
             return None
+
+    def start_interactive_session(self, journal_xml: str, initial_report: Optional[str] = None) -> None:
+        """Start an interactive session with Claude"""
+        try:
+            messages = []
+            system = self.get_system_prompt()
+            
+            # Add initial journal as first user message
+            messages.append({"role": "user", "content": journal_xml})
+            
+            # If we have a report, add it as assistant's response
+            if initial_report:
+                messages.append({"role": "assistant", "content": initial_report})
+            
+            print("\nEntering interactive mode. Type 'exit' to end the session.")
+            
+            while True:
+                user_input = input("\n> ").strip()
+                if user_input.lower() == 'exit':
+                    break
+                
+                messages.append({"role": "user", "content": user_input})
+                
+                print(f"\nThinking...")
+                
+                response = self.client.messages.create(
+                    model="claude-3-7-sonnet-20250219",
+                    system=system,
+                    messages=messages,
+                    max_tokens=4000
+                )
+                
+                content = response.content[0].text
+                messages.append({"role": "assistant", "content": content})
+                print(f"\n{content}")
+                
+        except KeyboardInterrupt:
+            print("\nExiting interactive mode...")
+        except Exception as e:
+            logger.error(f"Error in interactive session: {str(e)}")
+            logger.debug(traceback.format_exc())

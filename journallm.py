@@ -104,7 +104,7 @@ class JournalLM:
             return None
             
         logger.info("Getting insights from Claude")
-        return self.claude_prompter.get_insights(journal_xml)
+        return self.claude_prompter.get_report(journal_xml)
     
     def save_to_file(self, content: str, output_file: Optional[str] = None, file_type: str = "advice") -> str:
         """
@@ -187,11 +187,12 @@ class JournalLM:
             logger.error(f"Error adding entry to Day One: {str(e)}")
             return False
 
-    def run(self, input_file: Optional[str] = None, google_drive: bool = False, 
-            output_file: Optional[str] = None, extract_only: bool = False, 
-            journal_file: Optional[str] = None, save_journal: Optional[str] = None, 
+    def run(self, input_file: Optional[str] = None, google_drive: bool = False,
+            output_file: Optional[str] = None, no_report: bool = False,
+            journal_file: Optional[str] = None, save_journal: Optional[str] = None,
             should_save_journal: bool = False, folder_id: Optional[str] = None,
-            credentials_path: Optional[str] = None, add_to_journal: Optional[str] = None) -> None:
+            credentials_path: Optional[str] = None, add_to_journal: Optional[str] = None,
+            interactive: bool = False, interactive_report_file: Optional[str] = None) -> None:
         """
         Run the JournalLM process
         
@@ -199,13 +200,15 @@ class JournalLM:
             input_file: Optional path to a local ZIP or JSON file containing journal entries
             google_drive: If True, download from Google Drive instead of using a local file
             output_file: Optional filename for the insights output
-            extract_only: If True, only extract journal entries and don't prompt Claude
+            no_report: If True, skip report generation
             journal_file: Optional path to a pre-extracted journal XML file
             save_journal: Optional path to save the extracted journal XML
             should_save_journal: Flag indicating whether to save journal even if save_journal is None
             folder_id: Google Drive folder ID containing Day One backups (required if google_drive is True)
             credentials_path: Path to the credentials.json file (required if google_drive is True)
             add_to_journal: Optional name of the Day One journal to add the insights to
+            interactive: If True, start an interactive session after processing
+            interactive_report_file: Optional path to a report file to use in interactive mode
         """
         try:
             # Get journal entries
@@ -250,31 +253,40 @@ class JournalLM:
                 logger.error("Failed to get journal entries")
                 return
             
-            # Save the journal XML if requested or if should_save_journal flag is set
-            if save_journal is not None or should_save_journal or extract_only:
+            # Save the journal XML if requested
+            if save_journal is not None or should_save_journal:
                 self.save_to_file(journal_xml, save_journal, "journal")
                 logger.info(f"Journal XML saved")
             
-            # If extract_only, exit after saving (if requested)
-            if extract_only:
-                logger.info("Journal extraction completed successfully")
-                return
+            report = None
+            if interactive_report_file:
+                # Load the provided report file
+                try:
+                    with open(interactive_report_file, 'r', encoding='utf-8') as f:
+                        report = f.read()
+                    logger.debug(f"Loaded {len(report)} bytes from report file")
+                except Exception as e:
+                    logger.error(f"Error loading report file: {str(e)}")
+                    return
+            elif not no_report:
+                # Get insights from Claude
+                report = self.claude_prompter.get_report(journal_xml)
+                if not report:
+                    logger.error("Failed to get insights from Claude")
+                    return
+                
+                # Save the insights to a file
+                output_path = self.save_to_file(report, output_file, "advice")
+                
+                # Add to Day One if requested
+                if add_to_journal is not None:
+                    journal_name = None if add_to_journal is True else add_to_journal
+                    if not self.add_to_day_one(report, journal_name):
+                        logger.warning("Failed to add entry to Day One")
             
-            # Get insights from Claude
-            insights = self.get_insights(journal_xml)
-            if not insights:
-                logger.error("Failed to get insights from Claude")
-                return
-            
-            # Save the insights to a file
-            output_path = self.save_to_file(insights, output_file, "advice")
-            
-            # Add to Day One if requested
-            if add_to_journal is not None:
-                # If add_to_journal is True (flag without value), use None to indicate default journal
-                journal_name = None if add_to_journal is True else add_to_journal
-                if not self.add_to_day_one(insights, journal_name):
-                    logger.warning("Failed to add entry to Day One")
+            # Start interactive session if requested
+            if interactive:
+                self.claude_prompter.start_interactive_session(journal_xml, initial_report=report)
             
             logger.info("JournalLM process completed successfully")
             
@@ -295,12 +307,25 @@ def main():
     # Other options
     parser.add_argument("--output", help="Output filename for advice (default: auto-generated)")
     parser.add_argument("--save-journal", nargs='?', const=True, help="Output filename for journal (default: auto-generated if flag is given without a value)")
-    parser.add_argument("--extract-only", action="store_true", help="Only extract journal entries, don't prompt Claude (implies --save-journal)")
+    parser.add_argument("--no-report", action="store_true", help="Skip report generation")
+    parser.add_argument("--interactive", nargs='?', const=True, metavar='REPORT_FILE', help="Start an interactive session after processing. If REPORT_FILE is provided, use that report instead of generating one (implies --no-report)")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     parser.add_argument("--add-to-journal", nargs='?', const=True, help="Add the generated report to Day One (optionally specify journal name)")
     
     args = parser.parse_args()
-    
+
+    # Handle --interactive with report file
+    if isinstance(args.interactive, str):
+        args.no_report = True
+        if not os.path.exists(args.interactive):
+            logger.error(f"Report file not found: {args.interactive}")
+            return 1
+
+    # Validate arguments
+    if args.no_report and not (args.interactive or args.save_journal):
+        logger.error("No action specified. Use --interactive or --save-journal with --no-report")
+        return 1
+
     # Set up logging based on debug flag
     log_level = logging.DEBUG if args.debug else logging.INFO
     logging.basicConfig(
@@ -310,11 +335,11 @@ def main():
     
     try:
         # Determine API key requirement
-        api_key = os.getenv("API_KEY") if not args.extract_only else None
-        if not api_key and not args.extract_only:
-            logger.error("API_KEY environment variable is required when not using --extract-only")
+        api_key = os.getenv("API_KEY") if (not args.no_report or args.interactive) else None
+        if not api_key and (not args.no_report or args.interactive):
+            logger.error("API_KEY environment variable is required when not using --no-report or when using --interactive")
             return 1
-        
+
         # Get Google Drive settings from environment if needed
         folder_id = os.getenv("FOLDER_ID")
         credentials_path = os.getenv("GOOGLE_CREDENTIALS_FILE", "credentials.json")
@@ -355,17 +380,19 @@ def main():
             input_file=args.input_file,
             google_drive=args.google_drive,
             output_file=args.output,
-            extract_only=args.extract_only,
+            no_report=args.no_report,
             journal_file=args.journal,
             save_journal=save_journal_path,
             should_save_journal=should_save_journal,
             folder_id=folder_id if args.google_drive else None,
             credentials_path=credentials_path if args.google_drive else None,
-            add_to_journal=args.add_to_journal
+            add_to_journal=args.add_to_journal,
+            interactive=bool(args.interactive),
+            interactive_report_file=args.interactive if isinstance(args.interactive, str) else None
         )
         
         return 0
-    
+
     except FileNotFoundError as e:
         # Already logged above
         return 1

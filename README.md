@@ -59,8 +59,9 @@ python journallm.py [input_file] [options]
 - `input_file`: Path to a local ZIP or JSON file containing journal entries (optional)
 - `--google-drive`: Download the latest backup from Google Drive instead of using a local file
 - `--output PATH`: Output filename for advice (default: auto-generated)
-- `--save-journal [PATH]`: Output filename for journal (default: auto-generated if flag is given without a value)
-- `--extract-only`: Only extract journal entries, don't prompt Claude (implies --save-journal)
+- `--save-journal [PATH]`: Save extracted journal entries to a specified or automatically-named file
+- `--interactive [REPORT_FILE]`: Start an interactive session after processing. If REPORT_FILE is provided, use that report instead of generating one
+- `--no-report`: Skip report generation (for use with --interactive or --save-journal)
 - `--journal PATH`: Path to pre-extracted journal XML file (skips extraction)
 - `--add-to-journal [JOURNAL]`: Add the generated report to Day One in the specified journal or the default journal if not specified (see Day One CLI Setup)
 - `--debug`: Enable debug logging
@@ -82,19 +83,34 @@ Download and process the latest backup from Google Drive:
 python journallm.py --google-drive
 ```
 
-Extract journal entries only from a local file (automatically saves the journal):
+Save the report to a specific file:
 ```
-python journallm.py DayOneBackup.zip --extract-only
+python journallm.py DayOneBackup.zip --output report.md
 ```
 
-Extract journal entries from Google Drive with a specific output filename:
+Start an interactive session after generating a report:
 ```
-python journallm.py --google-drive --extract-only --save-journal my-journal.xml
+python journallm.py DayOneBackup.zip --interactive
+```
+
+Start an interactive session to chat about your journal without generating a full report:
+```
+python journallm.py DayOneBackup.zip --no-report --interactive
+```
+
+Start an interactive session with a previously generated report:
+```
+python journallm.py DayOneBackup.zip --interactive advice.md
+```
+
+Extract journal entries from Google Drive without generating a report:
+```
+python journallm.py --google-drive --no-report --save-journal journal.xml
 ```
 
 Get insights from a pre-extracted journal file:
 ```
-python journallm.py --journal journal.xml --output insights.md
+python journallm.py --journal journal.xml
 ```
 
 Add the generated insights to Day One (default journal):
