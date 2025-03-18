@@ -5,15 +5,20 @@ JournalLM is a Python script that provides personalized insights based on your D
 ## Setup
 
 1. Clone this repository
+   ```
+   git clone https://github.com/Ari-Zerner/journallm
+   cd journallm
+   ```
 2. Install dependencies:
    ```
    pip install -r requirements.txt
    ```
 3. Create a `.env` file based on the `.env.example` template.
 4. Get an Anthropic API key:
-   - Sign up at [Anthropic](https://www.anthropic.com/)
+   - Sign up at [Anthropic](https://console.anthropic.com/settings/keys)
    - Create an API key and add it to your `.env` file
 
+The following steps are optional, enabling additional features. It's recommended to skip them initially, and set them up later if desired.
 ### Optional: Google Drive Setup
 If you want to automatically download Day One backups from Google Drive:
 
@@ -59,7 +64,7 @@ python journallm.py [input_file] [options]
 - `input_file`: Path to a local ZIP or JSON file containing journal entries (optional)
 - `--google-drive`: Download the latest backup from Google Drive instead of using a local file
 - `--output PATH`: Output filename for advice (default: auto-generated)
-- `--save-journal [PATH]`: Save extracted journal entries to a specified or automatically-named file
+- `--save-journal [PATH]`: Save journal entries (pre-processed to be more readable for Claude) as an XML file with a specified or automatically-generated name
 - `--interactive [REPORT_FILE]`: Start an interactive session after processing. If REPORT_FILE is provided, use that report instead of generating one
 - `--no-report`: Skip report generation (for use with --interactive or --save-journal)
 - `--journal PATH`: Path to pre-extracted journal XML file (skips extraction)
