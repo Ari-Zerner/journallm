@@ -98,7 +98,7 @@ class ClaudePrompter:
             logger.debug("Preparing to send request to Claude")
             system_prompt = self.get_system_prompt()
             user_prompt = self.get_user_prompt(journal_xml)
-            assistant_prefill = f"# JournalLM Advice for {datetime.datetime.now().strftime('%B %d, %Y')}"
+            assistant_prefill = f"# JournalLM Advice for {datetime.datetime.now().strftime('%A, %B %d, %Y')}"
             
             logger.debug("Sending request to Claude API")
             logger.info("Waiting for Claude's response (this may take a minute)...")
