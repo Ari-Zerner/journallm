@@ -37,6 +37,7 @@ This section is a catch-all for anything that might be helpful for my growth and
 ## Context for JournalLM
 A journal entry template for me to fill out in order to provide missing context (e.g. my relation to specific names I've mentioned).
 This is meant as a way to provide you with factual context that I didn't write down because it's obvious to me, NOT as a general journaling prompt.
+Make sure to check my journal for answers to your previous questions, and incorporate that information into your response!
 Make it as convenient as possible for me to fill out:
    - don't ask for information you can already find in the journal entries
    - leave blank space for each answer
