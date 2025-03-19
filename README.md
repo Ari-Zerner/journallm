@@ -2,7 +2,18 @@
 
 JournalLM is a Python script that provides personalized insights based on your Day One journal entries. It leverages Claude AI to analyze your journal and generate helpful observations, suggestions, and advice.
 
-## Setup
+## How It Works
+
+1. You export your Day One journal
+2. JournalLM processes the exported journal into a readable format
+3. Your journal entries are sent to Claude AI with a carefully designed prompt
+4. Claude analyzes your journal and provides personalized insights and advice
+5. The response is saved as a markdown file
+6. Optional features are provided for more [advanced usage](#usage)
+
+## Quickstart
+
+### Setup
 
 1. Clone this repository
    ```
@@ -13,14 +24,25 @@ JournalLM is a Python script that provides personalized insights based on your D
    ```
    pip install -r requirements.txt
    ```
-3. Create a `.env` file based on the `.env.example` template.
-4. Get an Anthropic API key:
+3. Get an Anthropic API key:
    - Sign up at [Anthropic](https://console.anthropic.com/settings/keys)
    - Create an API key and add it to your `.env` file
+4. Create a `.env` file in the project directory with `API_KEY = <your_anthropic_api_key>`
 
-The following steps are optional, enabling additional features. It's recommended to skip them initially, and set them up later if desired.
-### Optional: Google Drive Setup
-If you want to automatically download Day One backups from Google Drive:
+### Basic Usage
+
+1. [Export](https://dayoneapp.com/guides/tips-and-tutorials/exporting-entries/) your Day One journal in JSON format
+2. Run the script:
+   ```
+   python journallm.py [dayone_export_file]
+   ```
+3. Your JournalLM report will be saved as a markdown file named `advice-<date>-<time>.md` in the project directory
+   - Tip: You can use [md-to-pdf](https://md-to-pdf.fly.dev/) to turn the report into a nicely-formatted PDF
+
+## Optional Setup
+
+### Google Drive Setup
+If you want to automatically download Day One backups from Google Drive rather than export manually:
 
 1. Set up Google Drive API:
    - Go to the [Google Cloud Console](https://console.cloud.google.com/)
@@ -38,9 +60,14 @@ If you want to automatically download Day One backups from Google Drive:
    - Navigate to your Day One backups folder in Google Drive
    - The folder ID is the part of the URL after "folders/" when you open the folder
    - Example: In `https://drive.google.com/drive/folders/1a2b3c4d5e6f7g8h9i`, the folder ID is `1a2b3c4d5e6f7g8h9i`
-3. Add the folder ID and credentials file path to your `.env` file
+3. Add the folder ID and credentials file path to your `.env` file (see `.env.example` for reference)
+4. Run the script with the `--google-drive` flag to download the latest backup from Google Drive
 
-### Optional: Day One CLI Setup (macOS only)
+#### Authentication
+
+The first time you run the application with Google Drive, it will open a browser window asking you to authorize access to your Google Drive. After authorization, a token will be saved to `token.json` in the project directory, so you won't need to authorize again unless the token expires.
+
+### Day One CLI Setup (macOS only)
 If you want to add the generated insights directly to your Day One journal:
 
 1. Install the Day One CLI:
@@ -52,7 +79,8 @@ If you want to add the generated insights directly to your Day One journal:
    ```
    dayone2 -h
    ```
-
+3. Run the script with the `--add-to-journal` flag to add the generated insights to your Day One journal
+   
 ## Usage
 
 ```
@@ -67,7 +95,7 @@ python journallm.py [input_file] [options]
 - `--save-journal [PATH]`: Save journal entries (pre-processed to be more readable for Claude) as an XML file with a specified or automatically-generated name
 - `--interactive [REPORT_FILE]`: Start an interactive session after processing. If REPORT_FILE is provided, use that report instead of generating one
 - `--no-report`: Skip report generation (for use with --interactive or --save-journal)
-- `--journal PATH`: Path to pre-extracted journal XML file (skips extraction)
+- `--journal PATH`: Path to journal XML file (previously generated with the `--save-journal` flag or from a non-Day One source, see [XML Format](#xml-format))
 - `--add-to-journal [JOURNAL]`: Add the generated report to Day One in the specified journal or the default journal if not specified (see Day One CLI Setup)
 - `--debug`: Enable debug logging
 
@@ -133,20 +161,7 @@ Enable debug logging:
 python journallm.py --debug
 ```
 
-## How It Works
-
-1. The script can:
-   - Process a local Day One backup ZIP file
-   - Process a single JSON journal file
-   - Connect to Google Drive and download the most recent Day One backup
-   - Use a pre-extracted journal XML file
-2. It extracts journal entries and processes them into a structured XML format
-3. The entries are sent to Claude AI with a carefully designed prompt
-4. Claude analyzes your journal and provides personalized insights and advice
-5. The response is saved as a markdown file for you to review
-6. Optionally, the response can be added directly to your Day One journal
-
-## XML Format
+### XML Format
 
 When processing journal entries, JournalLM creates an XML structure with the following format:
 
@@ -167,27 +182,28 @@ When processing journal entries, JournalLM creates an XML structure with the fol
 </journals>
 ```
 
-The journal name is derived from the JSON filename (without extension).
-
-## Authentication
-
-The first time you run the application with Google Drive, it will open a browser window asking you to authorize access to your Google Drive. After authorization, a token will be saved to `token.json` in the project directory, so you won't need to authorize again unless the token expires.
+This is the output of the `--save-journal` flag, and the recommended input format for providing your own journal entries with the `--journal` flag.
 
 ## Troubleshooting
+
+### Missing or invalid environment variables
+If you see an error about missing environment variables, check that:
+1. You have created a `.env` file in the project directory
+2. The file contains the required variables
+
+### Invalid input file
+If you see an error processing a local file:
+1. Make sure the file exists and is readable
+2. Verify that it's a valid ZIP file containing JSON files or a valid JSON file
+3. Check that the JSON structure matches the expected Day One format
 
 ### Missing credentials.json file
 If you see an error like `Credentials file not found: credentials.json`, you need to:
 1. Make sure your credentials file exists at the path specified in the `GOOGLE_CREDENTIALS_FILE` environment variable
 2. If you don't have a credentials file, go to the Google Cloud Console and create one as described in the Setup section
 
-### Missing or invalid environment variables
-If you see an error about missing environment variables, check that:
-1. You have created a `.env` file in the project directory
-2. The file contains the required variables (FOLDER_ID, GOOGLE_CREDENTIALS_FILE, and API_KEY)
-3. The values are correct (no extra spaces or quotes)
-
 ### Authentication errors
-If you encounter authentication errors:
+If you encounter Google Drive authentication errors:
 1. Delete the `token.json` file if it exists
 2. Run the script again to go through the authentication flow
 3. Make sure you grant the necessary permissions when prompted
@@ -195,15 +211,8 @@ If you encounter authentication errors:
 ### No Day One backup files found
 If you see an error like `No Day One backup files found in the folder`:
 1. Check that your FOLDER_ID is correct
-2. Verify that the folder contains Day One backup files (they should have "Day One" in the name and end with ".zip")
+2. Verify that the folder contains Day One backup ZIP files
 3. Run with `--debug` flag to see more detailed information about the files in the folder
-
-### Invalid local file
-If you see an error processing a local file:
-1. Make sure the file exists and is readable
-2. Verify that it's a valid ZIP file containing JSON files or a valid JSON file
-3. Check that the JSON structure matches the expected Day One format
-4. Run with `--debug` flag to see more detailed error information
 
 ### Day One CLI not found
 If you see an error like `Day One CLI not found` when using `--add-to-journal`:
