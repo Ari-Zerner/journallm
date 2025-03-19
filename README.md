@@ -9,7 +9,8 @@ JournalLM is a Python script that provides personalized insights based on your D
 3. Your journal entries are sent to Claude AI with a carefully designed prompt
 4. Claude analyzes your journal and provides personalized insights and advice
 5. The response is saved as a markdown file
-6. Optional features are provided for more [advanced usage](#usage)
+6. In the report, JournalLM asks you to provide addtional context to improve its advice over time
+7. Optional features are provided for more [advanced usage](#usage)
 
 ## Quickstart
 
@@ -26,12 +27,12 @@ JournalLM is a Python script that provides personalized insights based on your D
    ```
 3. Get an Anthropic API key:
    - Sign up at [Anthropic](https://console.anthropic.com/settings/keys)
-   - Create an API key and add it to your `.env` file
+   - Create an API key
 4. Create a `.env` file in the project directory with `API_KEY = <your_anthropic_api_key>`
 
 ### Basic Usage
 
-1. [Export](https://dayoneapp.com/guides/tips-and-tutorials/exporting-entries/) your Day One journal in JSON format
+1. [Export](https://dayoneapp.com/guides/tips-and-tutorials/exporting-entries/) your Day One journal. Select the JSON format option.
 2. Run the script:
    ```
    python journallm.py [dayone_export_file]
