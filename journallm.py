@@ -89,23 +89,6 @@ class JournalLM:
         logger.info(f"Extracting journal entries from local file: {file_path}")
         return self.journal_extractor.extract_from_file(file_path)
     
-    def get_insights(self, journal_xml: str) -> Optional[str]:
-        """
-        Get insights from Claude based on journal entries
-        
-        Args:
-            journal_xml: XML representation of the journal entries
-            
-        Returns:
-            str or None: Claude's response with insights
-        """
-        if not self.claude_prompter:
-            logger.error("Claude prompter not initialized (API key not provided)")
-            return None
-            
-        logger.info("Getting insights from Claude")
-        return self.claude_prompter.get_report(journal_xml)
-    
     def save_to_file(self, content: str, output_file: Optional[str] = None, file_type: str = "advice") -> str:
         """
         Save content to a file
@@ -270,7 +253,7 @@ class JournalLM:
                     return
             elif not no_report:
                 # Get insights from Claude
-                report = self.claude_prompter.get_report(journal_xml)
+                report = self.claude_prompter.get_report(journal_xml, cache_for_interactive=interactive)
                 if not report:
                     logger.error("Failed to get insights from Claude")
                     return

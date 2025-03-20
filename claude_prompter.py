@@ -40,14 +40,17 @@ class ClaudePrompter:
         self.client = anthropic.Client(api_key=api_key)
         logger.debug("Anthropic client initialized")
 
-    def get_report(self, journal_xml: str) -> Optional[str]:
+    def get_report(self, journal_xml: str, cache_for_interactive: bool = False) -> Optional[str]:
         """
         Get insights from Claude based on journal entries
+        
+        Args:
+            journal_xml: XML representation of the journal entries
+            cache_for_interactive: Whether to cache the journal and initial prompt (more expensive initially, cheaper repeated prompting for interactive mode)
             
         Returns:
             str or None: Claude's response with insights
         """
-        # TODO: Implement prompt caching to optimize costs when reusing the report in interactive mode
         try:
             logger.debug("Preparing to send request to Claude")
             assistant_prefill = f"# JournalLM Advice for {datetime.datetime.now().strftime('%A, %B %d, %Y')}"
@@ -55,12 +58,14 @@ class ClaudePrompter:
             logger.debug("Sending request to Claude API")
             logger.info("Waiting for Claude's response (this may take a minute)...")
             
+            report_prompt_content = {"type": "text", "text": REPORT_PROMPT, "cache_control": {"type": "ephemeral"}} if cache_for_interactive else REPORT_PROMPT
+            
             response = self.client.messages.create(
                 model="claude-3-7-sonnet-20250219",
                 system=SYSTEM_PROMPT,
                 messages=[
                     {"role": "user", "content": journal_xml},
-                    {"role": "user", "content": REPORT_PROMPT},
+                    {"role": "user", "content": report_prompt_content},
                     {"role": "assistant", "content": assistant_prefill}
                 ],
                 max_tokens=4000
@@ -99,7 +104,10 @@ class ClaudePrompter:
                 if user_input.lower() == 'exit':
                     break
                 
-                messages.append({"role": "user", "content": user_input})
+                # Cache after each user input; this is a cost savings with even one follow-up prompt
+                messages.append({"role": "user", "content": [
+                    {"type": "text", "text": user_input, "cache_control": {"type": "ephemeral"}}
+                ]})
                 
                 print(f"\nThinking...")
                 
