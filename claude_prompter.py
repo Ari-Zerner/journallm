@@ -13,6 +13,13 @@ import anthropic
 
 # Set up logging
 logger = logging.getLogger(__name__)
+        
+def load_prompt(prompt_file: str) -> str:
+    with open(prompt_file, 'r') as f:
+        return f.read()
+
+SYSTEM_PROMPT = load_prompt('role.prompt.txt')
+REPORT_PROMPT = load_prompt('create_report.prompt.txt')
 
 class ClaudePrompter:
     """
@@ -32,63 +39,10 @@ class ClaudePrompter:
         
         self.client = anthropic.Client(api_key=api_key)
         logger.debug("Anthropic client initialized")
-        
-    def load_prompt(self, prompt_file: str, variable_dict: Dict[str, str] = {}) -> str:
-        """
-        Load a prompt from a file and substitute any variables.
-
-        Args:
-            prompt_file: Path to the prompt template file
-            variable_dict: Dictionary mapping variable names to values to substitute
-
-        Returns:
-            str: The prompt with all variables substituted
-
-        Note:
-            Variables in the prompt file should be in the format {{variable_name}}.
-            If variable_dict values themselves contain {{key}} patterns, behavior is undefined.
-        """
-        with open(prompt_file, 'r') as f:
-            prompt = f.read()
-            for key, value in variable_dict.items():
-                prompt = prompt.replace(f"{{{key}}}", value)
-            return prompt
-    
-    def get_system_prompt(self) -> str:
-        """
-        Get the system prompt for Claude
-        
-        Returns:
-            str: The system prompt
-        """
-        system_prompt = self.load_prompt('role.prompt.txt')
-        logger.debug(f"System prompt length: {len(system_prompt)} characters")
-        return system_prompt
-
-    def get_user_prompt(self, journal_xml: str) -> str:
-        """
-        Construct the user prompt for Claude
-        
-        Args:
-            journal_xml: XML representation of the journal entries
-            
-        Returns:
-            str: The user prompt including the journal data
-        """
-        logger.debug(f"Creating user prompt with journal XML of {len(journal_xml)} bytes")
-        
-        prompt = self.load_prompt('create_report.prompt.txt', {
-            'journal_xml': journal_xml
-        })
-        logger.debug(f"User prompt created, total length: {len(prompt)} characters")
-        return prompt
 
     def get_report(self, journal_xml: str) -> Optional[str]:
         """
         Get insights from Claude based on journal entries
-        
-        Args:
-            journal_xml: XML representation of the journal entries
             
         Returns:
             str or None: Claude's response with insights
@@ -96,8 +50,6 @@ class ClaudePrompter:
         # TODO: Implement prompt caching to optimize costs when reusing the report in interactive mode
         try:
             logger.debug("Preparing to send request to Claude")
-            system_prompt = self.get_system_prompt()
-            user_prompt = self.get_user_prompt(journal_xml)
             assistant_prefill = f"# JournalLM Advice for {datetime.datetime.now().strftime('%A, %B %d, %Y')}"
             
             logger.debug("Sending request to Claude API")
@@ -105,9 +57,10 @@ class ClaudePrompter:
             
             response = self.client.messages.create(
                 model="claude-3-7-sonnet-20250219",
-                system=system_prompt,
+                system=SYSTEM_PROMPT,
                 messages=[
-                    {"role": "user", "content": user_prompt},
+                    {"role": "user", "content": journal_xml},
+                    {"role": "user", "content": REPORT_PROMPT},
                     {"role": "assistant", "content": assistant_prefill}
                 ],
                 max_tokens=4000
@@ -132,14 +85,11 @@ class ClaudePrompter:
     def start_interactive_session(self, journal_xml: str, initial_report: Optional[str] = None) -> None:
         """Start an interactive session with Claude"""
         try:
-            messages = []
-            system = self.get_system_prompt()
+            messages = [{"role": "user", "content": journal_xml}]
             
-            # Add initial journal as first user message
-            messages.append({"role": "user", "content": journal_xml})
-            
-            # If we have a report, add it as assistant's response
+            # If we have a report, treat it as assistant's response to report prompt
             if initial_report:
+                messages.append({"role": "user", "content": REPORT_PROMPT})
                 messages.append({"role": "assistant", "content": initial_report})
             
             print("\nEntering interactive mode. Type 'exit' to end the session.")
@@ -155,7 +105,7 @@ class ClaudePrompter:
                 
                 response = self.client.messages.create(
                     model="claude-3-7-sonnet-20250219",
-                    system=system,
+                    system=SYSTEM_PROMPT,
                     messages=messages,
                     max_tokens=4000
                 )
