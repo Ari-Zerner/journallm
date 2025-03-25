@@ -238,45 +238,50 @@ class JournalExtractor:
         try:
             logger.debug("Converting journal data to XML")
             
-            # Create the root element - now it's journals (plural)
-            root = ET.Element("journals")
+            # Create the root element
+            root = ET.Element("journal_entries")
             
-            # Process each journal
+            # Collect all entries from all journals
+            all_entries = []
             for journal_name, journal_data in journals.items():
-                logger.debug(f"Processing journal: {journal_name}")
-                
-                # Create a journal element for this journal
-                journal_elem = ET.SubElement(root, "journal")
-                journal_elem.set("name", journal_name)
-                
-                # Get entries
                 entries = journal_data.get('entries', [])
-                logger.debug(f"Processing {len(entries)} entries in journal {journal_name}")
+                for entry in entries:
+                    entry['_journal_name'] = journal_name  # Add journal name to entry
+                    all_entries.append(entry)
+            
+            # Sort all entries by creation date
+            all_entries.sort(key=lambda x: x.get('creationDate', ''))
+            logger.debug(f"Processing {len(all_entries)} total entries")
+            
+            # Process each entry
+            for i, entry in enumerate(all_entries):
+                if i % 100 == 0 and i > 0:
+                    logger.debug(f"Processed {i} entries so far")
                 
-                # Process each entry
-                for i, entry in enumerate(entries):
-                    if i % 100 == 0 and i > 0:
-                        logger.debug(f"Processed {i} entries so far in journal {journal_name}")
-                    
-                    entry_elem = ET.SubElement(journal_elem, "entry")
-                    
-                    # Add creation date
-                    created = ET.SubElement(entry_elem, "created")
-                    created.text = entry.get('creationDate', '')
-                    
-                    # Add modification date
-                    modified = ET.SubElement(entry_elem, "modified")
-                    modified.text = entry.get('modifiedDate', '')
-                    
-                    # Add location if available
-                    location = entry.get('location', {})
-                    if location and location.get('address'):
-                        loc = ET.SubElement(entry_elem, "loc")
-                        loc.text = location.get('address', '')
-                    
-                    # Add text content
-                    text = ET.SubElement(entry_elem, "text")
-                    text.text = entry.get('text', '')
+                entry_elem = ET.SubElement(root, "entry")
+                
+                # Add creation date
+                created = ET.SubElement(entry_elem, "created")
+                created.text = entry.get('creationDate', '')
+                
+                # Add modification date
+                modified = ET.SubElement(entry_elem, "modified")
+                modified.text = entry.get('modifiedDate', '')
+                
+                # Add journal name if there are multiple journals
+                if len(journals) > 1:
+                    journal = ET.SubElement(entry_elem, "journal")
+                    journal.text = entry.get('_journal_name', '')
+                
+                # Add location if available
+                location = entry.get('location', {})
+                if location and location.get('address'):
+                    loc = ET.SubElement(entry_elem, "loc")
+                    loc.text = location.get('address', '')
+                
+                # Add text content
+                text = ET.SubElement(entry_elem, "text")
+                text.text = entry.get('text', '')
             
             # Convert to string with pretty formatting
             logger.debug("Converting XML tree to string")

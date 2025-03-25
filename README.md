@@ -167,20 +167,23 @@ python journallm.py --debug
 When processing journal entries, JournalLM creates an XML structure with the following format:
 
 ```xml
-<journals>
-  <journal name="journal-name-1">
-    <entry>
-      <created>2023-01-01T12:00:00Z</created>
-      <modified>2023-01-01T12:00:00Z</modified>
-      <loc>Location information</loc>
-      <text>Journal entry text</text>
-    </entry>
-    <!-- More entries -->
-  </journal>
-  <journal name="journal-name-2">
-    <!-- Entries for second journal -->
-  </journal>
-</journals>
+<journal_entries>
+  <entry>
+    <created>2023-01-01T12:00:00Z</created>
+    <modified>2023-01-01T12:00:00Z</modified>
+    <journal>Journal Name 1</journal>  <!-- Only included if multiple journals -->
+    <loc>Location information</loc>
+    <text>Journal entry text</text>
+  </entry>
+  <entry>
+    <created>2023-01-02T15:30:00Z</created>
+    <modified>2023-01-02T15:30:00Z</modified>
+    <journal>Journal Name 2</journal>  <!-- Only included if multiple journals -->
+    <loc>Coffee Shop</loc>
+    <text>Another journal entry</text>
+  </entry>
+  <!-- More entries, sorted by creation date -->
+</journal_entries>
 ```
 
 This is the output of the `--save-journal` flag, and the recommended input format for providing your own journal entries with the `--journal` flag.
