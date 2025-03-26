@@ -90,13 +90,12 @@ python journallm.py [input_file] [options]
 
 ### Command Line Options
 
-- `input_file`: Path to a local ZIP or JSON file containing journal entries (optional)
+- `input_file` or `--input PATH`: Path to a local file containing journal entries (ZIP, JSON, or XML)
 - `--google-drive`: Download the latest backup from Google Drive instead of using a local file
 - `--output PATH`: Output filename for advice (default: auto-generated)
 - `--save-journal [PATH]`: Save journal entries (pre-processed to be more readable for Claude) as an XML file with a specified or automatically-generated name
 - `--interactive [REPORT_FILE]`: Start an interactive session after processing. If REPORT_FILE is provided, use that report instead of generating one
 - `--no-report`: Skip report generation (for use with --interactive or --save-journal)
-- `--journal PATH`: Path to journal XML file (previously generated with the `--save-journal` flag or from a non-Day One source, see [XML Format](#xml-format))
 - `--add-to-journal [JOURNAL]`: Add the generated report to Day One in the specified journal or the default journal if not specified (see Day One CLI Setup)
 - `--debug`: Enable debug logging
 
@@ -105,11 +104,22 @@ python journallm.py [input_file] [options]
 Process a local Day One backup ZIP file:
 ```
 python journallm.py DayOneBackup.zip
+# or
+python journallm.py --input DayOneBackup.zip
 ```
 
 Process a single JSON journal file:
 ```
 python journallm.py journal.json
+# or
+python journallm.py --input journal.json
+```
+
+Process a pre-extracted XML file:
+```
+python journallm.py journal.xml
+# or
+python journallm.py --input journal.xml
 ```
 
 Download and process the latest backup from Google Drive:

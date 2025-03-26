@@ -225,6 +225,48 @@ class JournalExtractor:
             logger.debug(traceback.format_exc())
             return {}
     
+    def load_xml_file(self, xml_path: str) -> str:
+        """
+        Load a journal from a local XML file
+        
+        Args:
+            xml_path: Path to the XML file
+            
+        Returns:
+            str: XML content of the file
+        """
+        try:
+            logger.debug(f"Loading XML file: {xml_path}")
+            
+            # Validate file exists
+            if not os.path.exists(xml_path):
+                logger.error(f"XML file not found: {xml_path}")
+                return None
+            
+            # Check file size (warn if over 50MB)
+            file_size_mb = os.path.getsize(xml_path) / (1024 * 1024)
+            if file_size_mb > 50:
+                logger.warning(f"XML file is large ({file_size_mb:.2f} MB), processing may take some time")
+            
+            # Read and validate XML
+            try:
+                with open(xml_path, 'r', encoding='utf-8') as f:
+                    xml_content = f.read()
+                # Basic validation - try parsing the XML
+                ET.fromstring(xml_content)
+                return xml_content
+            except ET.ParseError:
+                logger.error(f"Invalid XML in file: {xml_path}")
+                return None
+            except UnicodeDecodeError:
+                logger.error(f"File encoding error: {xml_path} is not a valid UTF-8 text file")
+                return None
+            
+        except Exception as e:
+            logger.error(f"Error loading XML file: {str(e)}")
+            logger.debug(traceback.format_exc())
+            return None
+
     def convert_to_xml(self, journals: Dict[str, Dict]) -> str:
         """
         Convert journal data from JSON to XML format
@@ -299,10 +341,10 @@ class JournalExtractor:
     
     def extract_from_file(self, file_path: str) -> Optional[str]:
         """
-        Extract journal entries from a local file (ZIP or JSON) and convert to XML
+        Extract journal entries from a local file (ZIP, JSON, or XML)
         
         Args:
-            file_path: Path to the local ZIP or JSON file
+            file_path: Path to the local file
             
         Returns:
             str or None: XML representation of the journal entries
@@ -318,8 +360,11 @@ class JournalExtractor:
             # Determine file type
             file_ext = pathlib.Path(file_path).suffix.lower()
             
-            journals = {}
-            if file_ext == '.zip':
+            if file_ext == '.xml':
+                # Process XML file
+                logger.info("Processing XML file")
+                return self.load_xml_file(file_path)
+            elif file_ext == '.zip':
                 # Process ZIP file
                 logger.info("Processing ZIP file")
                 journals = self.extract_journals_from_zip(file_path)
@@ -328,22 +373,23 @@ class JournalExtractor:
                 logger.info("Processing JSON file")
                 journals = self.load_json_file(file_path)
             else:
-                logger.error(f"Unsupported file type: {file_ext}. Only .zip and .json files are supported.")
+                logger.error(f"Unsupported file type: {file_ext}. Only .zip, .json, and .xml files are supported.")
                 return None
             
             if not journals:
                 logger.error("No journal data extracted from file")
                 return None
             
-            # Convert to XML
-            logger.info(f"Converting {len(journals)} journals to XML format")
-            return self.convert_to_xml(journals)
+            # Convert to XML if needed
+            if file_ext in ['.zip', '.json']:
+                logger.info(f"Converting {len(journals)} journals to XML format")
+                return self.convert_to_xml(journals)
             
         except Exception as e:
             logger.error(f"Error processing local file: {str(e)}")
             logger.debug(traceback.format_exc())
             return None
-            
+
     def extract_from_bytesio(self, file_content: BytesIO) -> Optional[str]:
         """
         Extract journal entries from a BytesIO object containing a ZIP file

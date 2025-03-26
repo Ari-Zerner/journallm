@@ -283,9 +283,9 @@ def main():
     
     # Input source group (mutually exclusive)
     input_group = parser.add_mutually_exclusive_group()
-    input_group.add_argument("input_file", nargs="?", help="Path to a local ZIP or JSON file containing journal entries")
+    input_group.add_argument("input_file", nargs="?", help="Path to a local file containing journal entries (ZIP, JSON, or XML)")
+    input_group.add_argument("--input", help="Path to a local file containing journal entries (ZIP, JSON, or XML)")
     input_group.add_argument("--google-drive", action="store_true", help="Download the latest backup from Google Drive")
-    input_group.add_argument("--journal", help="Path to pre-extracted journal XML file (skips extraction)")
     
     # Other options
     parser.add_argument("--output", help="Output filename for advice (default: auto-generated)")
@@ -358,13 +358,15 @@ def main():
             else:  # Flag was given with a value
                 save_journal_path = args.save_journal
         
+        # Determine input file
+        input_file = args.input if args.input else args.input_file
+        
         # Run the process
         journallm.run(
-            input_file=args.input_file,
+            input_file=input_file,
             google_drive=args.google_drive,
             output_file=args.output,
             no_report=args.no_report,
-            journal_file=args.journal,
             save_journal=save_journal_path,
             should_save_journal=should_save_journal,
             folder_id=folder_id if args.google_drive else None,
