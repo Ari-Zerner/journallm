@@ -1,7 +1,11 @@
 anthropic>=0.49.0
 python-dotenv>=1.0.0
 
-# Google Drive dependencies (optional, only needed for --google-drive)
+# Web app dependencies
+flask>=3.1.0
+markdown2>=2.5.3
+
+# Google Drive dependencies (only needed for importing Day One backups from Google Drive)
 google-auth>=2.22.0
 google-auth-oauthlib>=1.0.0
 google-api-python-client>=2.100.0

@@ -1,0 +1,80 @@
+/* Upload zone styles */
+.upload-zone {
+    border: 2px dashed #ccc;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+    margin: 1.5rem 0;
+}
+
+.upload-zone.dragover {
+    border-color: #0d6efd;
+    background: #e7f1ff;
+}
+
+.upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.upload-icon {
+    width: 48px;
+    height: 48px;
+    opacity: 0.5;
+}
+
+.file-input {
+    display: none;
+}
+
+/* Progress section styles */
+.progress-section {
+    margin: 1.5rem 0;
+}
+
+.progress-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+/* Report styles */
+.markdown-body {
+    padding: 2rem;
+}
+
+/* Make sure code blocks don't overflow */
+.markdown-body pre {
+    overflow-x: auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    .upload-zone {
+        padding: 1.5rem;
+    }
+    
+    .markdown-body {
+        padding: 1rem;
+    }
+}
+
+/* Animation for status changes */
+.progress-status, .alert {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

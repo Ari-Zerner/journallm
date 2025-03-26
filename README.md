@@ -198,6 +198,31 @@ When processing journal entries, JournalLM creates an XML structure with the fol
 
 This is the output of the `--save-journal` flag, and the recommended input format for providing your own journal entries with the `--journal` flag.
 
+## Web Interface
+
+JournalLM includes a web interface for easy file uploads and processing. To run the web app:
+
+1. Make sure you have the required dependencies installed:
+   ```
+   pip install flask markdown2
+   ```
+
+2. Start the web server:
+   ```
+   python web_app.py
+   ```
+
+3. Open your browser to `http://localhost:5000`
+
+The web interface provides:
+- Simple drag-and-drop file upload
+- Support for ZIP, JSON, and XML files
+- Real-time processing status
+- Nicely formatted report display
+- Option to download report as markdown
+
+Note: The web interface requires the `API_KEY` environment variable to be set, just like the command line interface.
+
 ## Troubleshooting
 
 ### Missing or invalid environment variables
