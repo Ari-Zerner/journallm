@@ -34,6 +34,15 @@
                     <div class="card-body">
                         <h5 class="card-title">Upload Your Journal</h5>
                         
+                        {% if dev_mode %}
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="use-mock" name="use-mock">
+                            <label class="form-check-label" for="use-mock">
+                                Use Mock Report
+                            </label>
+                        </div>
+                        {% endif %}
+                        
                         <div id="upload-zone" class="upload-zone">
                             <div class="upload-content">
                                 <img src="{{ url_for('static', filename='upload.svg') }}" alt="Upload" class="upload-icon">

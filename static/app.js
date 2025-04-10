@@ -8,10 +8,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectedFileDiv = document.getElementById('selected-file');
     const fileNameSpan = document.getElementById('file-name');
     const processButton = document.getElementById('process-button');
+    const useMockCheckbox = document.getElementById('use-mock');
     
     let selectedFile = null;
 
-    // Handle drag and drop events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         uploadZone.addEventListener(eventName, preventDefaults, false);
         document.body.addEventListener(eventName, preventDefaults, false);
@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', function() {
         e.stopPropagation();
     }
 
-    // Handle drag and drop visual feedback
     ['dragenter', 'dragover'].forEach(eventName => {
         uploadZone.addEventListener(eventName, highlight, false);
     });
@@ -39,22 +38,31 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadZone.classList.remove('dragover');
     }
 
-    // Handle file drop
     uploadZone.addEventListener('drop', handleDrop, false);
     uploadZone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileSelect);
 
-    // Handle process button click
     processButton.addEventListener('click', () => {
-        if (selectedFile) {
+        if (useMockCheckbox && useMockCheckbox.checked) {
+            processFile(selectedFile);
+        } else if (selectedFile) {
             processFile(selectedFile);
         }
     });
 
-    // Handle remove file button click
-    selectedFileDiv.querySelector('.btn-close').addEventListener('click', () => {
-        resetFileSelection();
-    });
+    if (selectedFileDiv) {
+        selectedFileDiv.querySelector('.btn-close').addEventListener('click', () => {
+            resetFileSelection();
+        });
+    }
+
+    if (useMockCheckbox) {
+        useMockCheckbox.addEventListener('change', () => {
+            processButton.style.display = useMockCheckbox.checked ? 'inline-block' : (selectedFile ? 'inline-block' : 'none');
+            uploadZone.style.display = selectedFile ? 'none' : 'block';
+            selectedFileDiv.style.display = selectedFile ? 'block' : 'none';
+        });
+    }
 
     function handleDrop(e) {
         const dt = e.dataTransfer;
@@ -70,20 +78,17 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleFile(file) {
         if (!file) return;
 
-        // Check file type
         const extension = file.name.split('.').pop().toLowerCase();
         if (!['zip', 'json', 'xml'].includes(extension)) {
             showError('Invalid file type. Please upload a ZIP, JSON, or XML file.');
             return;
         }
 
-        // Check file size (100MB limit)
         if (file.size > 100 * 1024 * 1024) {
             showError('File is too large. Maximum size is 100MB.');
             return;
         }
 
-        // Store the file and update UI
         selectedFile = file;
         fileNameSpan.textContent = file.name;
         selectedFileDiv.style.display = 'block';
@@ -96,29 +101,36 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedFile = null;
         fileInput.value = '';
         selectedFileDiv.style.display = 'none';
-        processButton.style.display = 'none';
+        processButton.style.display = useMockCheckbox && useMockCheckbox.checked ? 'inline-block' : 'none';
         uploadZone.style.display = 'block';
         errorDiv.style.display = 'none';
     }
 
     function processFile(file) {
-        // Check if API key is required and provided
-        if (apiKeyInput && !apiKeyInput.value.trim()) {
+        if (!useMockCheckbox?.checked && apiKeyInput && !apiKeyInput.value.trim()) {
             showError('Please enter your API key.');
             return;
         }
 
-        // Reset state
         errorDiv.style.display = 'none';
         progressSection.style.display = 'block';
         selectedFileDiv.style.display = 'none';
         processButton.style.display = 'none';
+        uploadZone.style.display = 'none';
+        if (useMockCheckbox) {
+            useMockCheckbox.disabled = true;
+        }
         statusText.textContent = 'Uploading file...';
 
         const formData = new FormData();
-        formData.append('file', file);
+        if (file) {
+            formData.append('file', file);
+        }
         if (apiKeyInput) {
             formData.append('api_key', apiKeyInput.value.trim());
+        }
+        if (useMockCheckbox) {
+            formData.append('use_mock', useMockCheckbox.checked);
         }
 
         fetch('/upload', {
@@ -174,8 +186,12 @@ document.addEventListener('DOMContentLoaded', function() {
         errorDiv.textContent = message;
         errorDiv.style.display = 'block';
         progressSection.style.display = 'none';
-        selectedFileDiv.style.display = selectedFile ? 'block' : 'none';
-        processButton.style.display = selectedFile ? 'inline-block' : 'none';
+        if (useMockCheckbox) {
+            useMockCheckbox.disabled = false;
+        }
+        
         uploadZone.style.display = selectedFile ? 'none' : 'block';
+        selectedFileDiv.style.display = selectedFile ? 'block' : 'none';
+        processButton.style.display = (useMockCheckbox?.checked || selectedFile) ? 'inline-block' : 'none';
     }
 });
