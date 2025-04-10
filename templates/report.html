@@ -31,6 +31,15 @@
                         {{ report | safe }}
                     </div>
                 </div>
+            
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('download_report', job_id=job_id) }}" class="btn btn-primary me-2">
+                        Download Report
+                    </a>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                        Process Another Journal
+                    </a>
+                </div>
 
                 <div class="text-center mt-4">
                     <a href="https://github.com/Ari-Zerner/journallm" target="_blank" class="text-muted">
