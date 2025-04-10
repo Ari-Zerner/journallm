@@ -42,6 +42,17 @@
                             </div>
                         </div>
 
+                        <div id="selected-file" class="alert alert-info mt-3" style="display: none;">
+                            <span id="file-name"></span>
+                            <button type="button" class="btn-close float-end" aria-label="Close"></button>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <button id="process-button" class="btn btn-primary" style="display: none;">
+                                Process Journal
+                            </button>
+                        </div>
+
                         <div id="progress" class="progress-section" style="display: none;">
                             <div class="progress-status">
                                 <div class="spinner-border text-primary" role="status">
@@ -65,7 +76,7 @@
                                 </ul>
                             </li>
                             <li>Upload your ZIP/JSON/XML file here</li>
-                            <li>Sit back while JournalLM processes your journal entries</li>
+                            <li>Click "Process Journal" to analyze your entries</li>
                             <li>Get personalized insights and advice</li>
                         </ol>
                     </div>

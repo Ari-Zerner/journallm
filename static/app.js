@@ -5,6 +5,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusText = document.getElementById('status-text');
     const errorDiv = document.getElementById('error');
     const apiKeyInput = document.getElementById('api-key');
+    const selectedFileDiv = document.getElementById('selected-file');
+    const fileNameSpan = document.getElementById('file-name');
+    const processButton = document.getElementById('process-button');
+    
+    let selectedFile = null;
 
     // Handle drag and drop events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -39,6 +44,18 @@ document.addEventListener('DOMContentLoaded', function() {
     uploadZone.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileSelect);
 
+    // Handle process button click
+    processButton.addEventListener('click', () => {
+        if (selectedFile) {
+            processFile(selectedFile);
+        }
+    });
+
+    // Handle remove file button click
+    selectedFileDiv.querySelector('.btn-close').addEventListener('click', () => {
+        resetFileSelection();
+    });
+
     function handleDrop(e) {
         const dt = e.dataTransfer;
         const file = dt.files[0];
@@ -66,20 +83,36 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Store the file and update UI
+        selectedFile = file;
+        fileNameSpan.textContent = file.name;
+        selectedFileDiv.style.display = 'block';
+        processButton.style.display = 'inline-block';
+        uploadZone.style.display = 'none';
+        errorDiv.style.display = 'none';
+    }
+
+    function resetFileSelection() {
+        selectedFile = null;
+        fileInput.value = '';
+        selectedFileDiv.style.display = 'none';
+        processButton.style.display = 'none';
+        uploadZone.style.display = 'block';
+        errorDiv.style.display = 'none';
+    }
+
+    function processFile(file) {
         // Check if API key is required and provided
         if (apiKeyInput && !apiKeyInput.value.trim()) {
             showError('Please enter your API key.');
             return;
         }
 
-        uploadFile(file);
-    }
-
-    function uploadFile(file) {
         // Reset state
         errorDiv.style.display = 'none';
         progressSection.style.display = 'block';
-        uploadZone.style.display = 'none';
+        selectedFileDiv.style.display = 'none';
+        processButton.style.display = 'none';
         statusText.textContent = 'Uploading file...';
 
         const formData = new FormData();
@@ -141,7 +174,8 @@ document.addEventListener('DOMContentLoaded', function() {
         errorDiv.textContent = message;
         errorDiv.style.display = 'block';
         progressSection.style.display = 'none';
-        uploadZone.style.display = 'block';
-        fileInput.value = '';
+        selectedFileDiv.style.display = selectedFile ? 'block' : 'none';
+        processButton.style.display = selectedFile ? 'inline-block' : 'none';
+        uploadZone.style.display = selectedFile ? 'none' : 'block';
     }
 });

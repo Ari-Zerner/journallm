@@ -32,6 +32,14 @@
     display: none;
 }
 
+/* Selected file styles */
+#selected-file {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
 /* Progress section styles */
 .progress-section {
     margin: 1.5rem 0;
@@ -52,6 +60,11 @@
 /* Make sure code blocks don't overflow */
 .markdown-body pre {
     overflow-x: auto;
+}
+
+/* Action buttons styles */
+.action-buttons {
+    margin: 1rem 0;
 }
 
 /* Responsive adjustments */
