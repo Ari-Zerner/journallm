@@ -79,8 +79,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!file) return;
 
         const extension = file.name.split('.').pop().toLowerCase();
-        if (!['zip', 'json', 'xml'].includes(extension)) {
-            showError('Invalid file type. Please upload a ZIP, JSON, or XML file.');
+        if (!['zip', 'json', 'xml', 'txt', 'md'].includes(extension)) {
+            showError('Invalid file type. Please upload a ZIP, JSON, XML, TXT, or MD file.');
             return;
         }
 

@@ -283,15 +283,15 @@ def main():
     
     # Input source group (mutually exclusive)
     input_group = parser.add_mutually_exclusive_group()
-    input_group.add_argument("input_file", nargs="?", help="Path to a local file containing journal entries (ZIP, JSON, or XML)")
-    input_group.add_argument("--input", help="Path to a local file containing journal entries (ZIP, JSON, or XML)")
+    input_group.add_argument("input_file", nargs="?", help="Path to a local file containing journal entries")
+    input_group.add_argument("--input", help="Path to a local file containing journal entries")
     input_group.add_argument("--google-drive", action="store_true", help="Download the latest backup from Google Drive")
     
     # Other options
     parser.add_argument("--output", help="Output filename for advice (default: auto-generated)")
     parser.add_argument("--save-journal", nargs='?', const=True, help="Output filename for journal (default: auto-generated if flag is given without a value)")
     parser.add_argument("--no-report", action="store_true", help="Skip report generation")
-    parser.add_argument("--interactive", nargs='?', const=True, metavar='REPORT_FILE', help="Start an interactive session after processing. If REPORT_FILE is provided, use that report instead of generating one (implies --no-report)")
+    parser.add_argument("--interactive", nargs='?', const=True, metavar='REPORT_FILE', help="Start an interactive session after processing. If REPORT_FILE is provided, use that report instead of generating one")
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
     parser.add_argument("--add-to-journal", nargs='?', const=True, help="Add the generated report to Day One (optionally specify journal name)")
     

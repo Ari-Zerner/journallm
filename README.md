@@ -1,16 +1,15 @@
 # JournalLM
 
-JournalLM is a Python script that provides personalized insights based on your Day One journal entries. It leverages Claude AI to analyze your journal and generate helpful observations, suggestions, and advice.
+JournalLM is a Python script that provides personalized insights based on your journal, using the Claude API.
 
 ## How It Works
 
-1. You export your Day One journal
-2. JournalLM processes the exported journal into a readable format
-3. Your journal entries are sent to Claude AI with a carefully designed prompt
-4. Claude analyzes your journal and provides personalized insights and advice
-5. The response is saved as a markdown file
-6. In the report, JournalLM asks you to provide addtional context to improve its advice over time
-7. Optional features are provided for more [advanced usage](#usage)
+1. You provide your journal as an export from Day One or as a single file
+2. Your journal entries are sent to Claude AI with a carefully designed prompt
+3. Claude analyzes your journal and provides personalized insights and advice
+4. The response is saved as a markdown file
+5. In the report, JournalLM asks you to provide additional context to improve its advice over time
+6. Optional features are provided for more [advanced usage](#usage)
 
 ## Quickstart
 
@@ -34,10 +33,13 @@ JournalLM is a Python script that provides personalized insights based on your D
 
 ### Basic Usage
 
-1. [Export](https://dayoneapp.com/guides/tips-and-tutorials/exporting-entries/) your Day One journal. Select the JSON format option.
+1. Prepare your journal in one of these formats:
+   - [Export](https://dayoneapp.com/guides/tips-and-tutorials/exporting-entries/) your Day One journal (select JSON format, provide the exported ZIP file)
+   - Create a file with your journal entries in XML, JSON, MD, or TXT format
+     - See the [XML Format](#xml-format) section for a recommended format
 2. Run the script:
    ```
-   python journallm.py [dayone_export_file]
+   python journallm.py [your_journal_file]
    ```
 3. Your JournalLM report will be saved as a markdown file named `advice-<date>-<time>.md` in the project directory
    - Tip: You can use [md-to-pdf](https://md-to-pdf.fly.dev/) to turn the report into a nicely-formatted PDF
@@ -176,7 +178,7 @@ python journallm.py --debug
 
 ### XML Format
 
-When processing journal entries, JournalLM creates an XML structure with the following format:
+When processing a Day One export, JournalLM creates an XML structure with the following format:
 
 ```xml
 <journal_entries>
@@ -198,7 +200,7 @@ When processing journal entries, JournalLM creates an XML structure with the fol
 </journal_entries>
 ```
 
-This is the output of the `--save-journal` flag, and the recommended input format for providing your own journal entries with the `--journal` flag.
+This is the output of the `--save-journal` flag, and the recommended input format for providing your own journal entries.
 
 ## Web Interface
 

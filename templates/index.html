@@ -11,7 +11,7 @@
     <div class="container">
         <header class="text-center my-5">
             <h1>JournalLM</h1>
-            <p class="lead">Get personalized insights from your Day One journal</p>
+            <p class="lead">Get personalized insights from your journal</p>
         </header>
 
         <div class="row justify-content-center">
@@ -47,7 +47,7 @@
                             <div class="upload-content">
                                 <img src="{{ url_for('static', filename='upload.svg') }}" alt="Upload" class="upload-icon">
                                 <p>Drag and drop your file here<br>or click to select</p>
-                                <input type="file" id="file-input" accept=".zip,.json,.xml" class="file-input">
+                                <input type="file" id="file-input" accept=".zip,.json,.xml,.txt,.md" class="file-input">
                             </div>
                         </div>
 
@@ -79,12 +79,13 @@
                     <div class="card-body">
                         <h5 class="card-title">How It Works</h5>
                         <ol class="mb-0">
-                            <li>Export your Day One journal in JSON format
+                            <li>Choose how to provide your journal:
                                 <ul>
-                                    <li>Or bring a journal from anywhere, in XML format</li>
+                                    <li>Export from Day One (select JSON format, and upload the exported ZIP file)</li>
+                                    <li>Bring a journal from anywhere, in XML, JSON, MD, or TXT format</li>
                                 </ul>
                             </li>
-                            <li>Upload your ZIP/JSON/XML file here</li>
+                            <li>Upload your file here</li>
                             <li>Click "Process Journal" to analyze your entries</li>
                             <li>Get personalized insights and advice</li>
                         </ol>

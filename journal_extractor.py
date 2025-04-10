@@ -29,7 +29,7 @@ class JournalExtractor:
         """
         logger.debug("Initializing JournalExtractor")
     
-    def extract_journals_from_zip(self, zip_content: Union[BytesIO, str]) -> Dict[str, Dict]:
+    def extract_dayone_journals_from_zip(self, zip_content: Union[BytesIO, str]) -> Dict[str, Dict]:
         """
         Extract journal entries from a Day One backup zip file
         
@@ -160,12 +160,12 @@ class JournalExtractor:
             logger.debug(traceback.format_exc())
             return {}
     
-    def load_json_file(self, json_path: str) -> Dict[str, Dict]:
+    def load_dayone_json(self, json_path: str) -> Dict[str, Dict]:
         """
-        Load a journal from a local JSON file
+        Load a Day One JSON file (from within a Day One export ZIP)
         
         Args:
-            json_path: Path to the JSON file
+            json_path: Path to the Day One JSON file
             
         Returns:
             Dict[str, Dict]: Dictionary mapping journal name to journal data
@@ -225,51 +225,9 @@ class JournalExtractor:
             logger.debug(traceback.format_exc())
             return {}
     
-    def load_xml_file(self, xml_path: str) -> str:
+    def convert_dayone_to_xml(self, journals: Dict[str, Dict]) -> str:
         """
-        Load a journal from a local XML file
-        
-        Args:
-            xml_path: Path to the XML file
-            
-        Returns:
-            str: XML content of the file
-        """
-        try:
-            logger.debug(f"Loading XML file: {xml_path}")
-            
-            # Validate file exists
-            if not os.path.exists(xml_path):
-                logger.error(f"XML file not found: {xml_path}")
-                return None
-            
-            # Check file size (warn if over 50MB)
-            file_size_mb = os.path.getsize(xml_path) / (1024 * 1024)
-            if file_size_mb > 50:
-                logger.warning(f"XML file is large ({file_size_mb:.2f} MB), processing may take some time")
-            
-            # Read and validate XML
-            try:
-                with open(xml_path, 'r', encoding='utf-8') as f:
-                    xml_content = f.read()
-                # Basic validation - try parsing the XML
-                ET.fromstring(xml_content)
-                return xml_content
-            except ET.ParseError:
-                logger.error(f"Invalid XML in file: {xml_path}")
-                return None
-            except UnicodeDecodeError:
-                logger.error(f"File encoding error: {xml_path} is not a valid UTF-8 text file")
-                return None
-            
-        except Exception as e:
-            logger.error(f"Error loading XML file: {str(e)}")
-            logger.debug(traceback.format_exc())
-            return None
-
-    def convert_to_xml(self, journals: Dict[str, Dict]) -> str:
-        """
-        Convert journal data from JSON to XML format
+        Convert Day One journal data from JSON to XML format
         
         Args:
             journals: Dictionary mapping journal names to journal data
@@ -339,15 +297,49 @@ class JournalExtractor:
             logger.debug(traceback.format_exc())
             raise
     
+    def load_file_content(self, file_path: str) -> Optional[str]:
+        """
+        Load content from a file and wrap in <journal> tags if needed
+        
+        Args:
+            file_path: Path to the file
+            
+        Returns:
+            str: File content, wrapped in <journal> tags if not already XML
+        """
+        try:
+            logger.debug(f"Loading file: {file_path}")
+            
+            # Validate file exists
+            if not os.path.exists(file_path):
+                logger.error(f"File not found: {file_path}")
+                return None
+            
+            # Read the file content
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    return f.read()
+
+            except UnicodeDecodeError:
+                logger.error(f"File encoding error: {file_path} is not a valid UTF-8 text file")
+                return None
+            
+        except Exception as e:
+            logger.error(f"Error loading file: {str(e)}")
+            logger.debug(traceback.format_exc())
+            return None
+
     def extract_from_file(self, file_path: str) -> Optional[str]:
         """
-        Extract journal entries from a local file (ZIP, JSON, or XML)
+        Extract journal entries from a local file
         
         Args:
             file_path: Path to the local file
             
         Returns:
-            str or None: XML representation of the journal entries
+            str or None: Journal content in appropriate format for Claude
+            - For ZIP files: Processed as Day One export, converted to XML
+            - For all other files: Content wrapped in <journal> tags (unless already XML)
         """
         try:
             logger.info(f"Processing local file: {file_path}")
@@ -357,45 +349,29 @@ class JournalExtractor:
                 logger.error(f"File not found: {file_path}")
                 return None
             
-            # Determine file type
-            file_ext = pathlib.Path(file_path).suffix.lower()
+            # Special handling for Day One export ZIP files
+            if file_path.endswith('.zip'):
+                logger.info("Processing Day One export ZIP file")
+                journals = self.extract_dayone_journals_from_zip(file_path)
+                if not journals:
+                    logger.error("No journal data extracted from file")
+                    return None
+                return self.convert_dayone_to_xml(journals)
             
-            if file_ext == '.xml':
-                # Process XML file
-                logger.info("Processing XML file")
-                return self.load_xml_file(file_path)
-            elif file_ext == '.zip':
-                # Process ZIP file
-                logger.info("Processing ZIP file")
-                journals = self.extract_journals_from_zip(file_path)
-            elif file_ext == '.json':
-                # Process JSON file
-                logger.info("Processing JSON file")
-                journals = self.load_json_file(file_path)
-            else:
-                logger.error(f"Unsupported file type: {file_ext}. Only .zip, .json, and .xml files are supported.")
-                return None
-            
-            if not journals:
-                logger.error("No journal data extracted from file")
-                return None
-            
-            # Convert to XML if needed
-            if file_ext in ['.zip', '.json']:
-                logger.info(f"Converting {len(journals)} journals to XML format")
-                return self.convert_to_xml(journals)
+            # All other files are treated as raw journal content
+            return self.load_file_content(file_path)
             
         except Exception as e:
-            logger.error(f"Error processing local file: {str(e)}")
+            logger.error(f"Error processing file: {str(e)}")
             logger.debug(traceback.format_exc())
             return None
 
     def extract_from_bytesio(self, file_content: BytesIO) -> Optional[str]:
         """
-        Extract journal entries from a BytesIO object containing a ZIP file
+        Extract journal entries from a BytesIO object containing a Day One ZIP file
         
         Args:
-            file_content: BytesIO object containing a ZIP file
+            file_content: BytesIO object containing a Day One ZIP file
             
         Returns:
             str or None: XML representation of the journal entries
@@ -404,14 +380,14 @@ class JournalExtractor:
             logger.info("Processing BytesIO content")
             
             # Extract journals from the content
-            journals = self.extract_journals_from_zip(file_content)
+            journals = self.extract_dayone_journals_from_zip(file_content)
             if not journals:
                 logger.error("No journal data extracted from BytesIO content")
                 return None
             
             # Convert to XML
             logger.info(f"Converting {len(journals)} journals to XML format")
-            return self.convert_to_xml(journals)
+            return self.convert_dayone_to_xml(journals)
             
         except Exception as e:
             logger.error(f"Error processing BytesIO content: {str(e)}")

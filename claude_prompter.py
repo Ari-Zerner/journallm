@@ -40,12 +40,12 @@ class ClaudePrompter:
         self.client = anthropic.Client(api_key=api_key)
         logger.debug("Anthropic client initialized")
 
-    def get_report(self, journal_xml: str, cache_for_interactive: bool = False) -> Optional[str]:
+    def get_report(self, journal: str, cache_for_interactive: bool = False) -> Optional[str]:
         """
         Get insights from Claude based on journal entries
         
         Args:
-            journal_xml: XML representation of the journal entries
+            journal: Journal entries
             cache_for_interactive: Whether to cache the journal and initial prompt (more expensive initially, cheaper repeated prompting for interactive mode)
             
         Returns:
@@ -64,7 +64,7 @@ class ClaudePrompter:
                 model="claude-3-7-sonnet-20250219",
                 system=SYSTEM_PROMPT,
                 messages=[
-                    {"role": "user", "content": journal_xml},
+                    {"role": "user", "content": f"<journal>\n{journal}\n</journal>"},
                     {"role": "user", "content": report_prompt_content},
                     {"role": "assistant", "content": assistant_prefill}
                 ],

@@ -30,7 +30,7 @@ logging.basicConfig(level=logging.INFO)
 app = Flask(__name__)
 
 # Configure upload settings
-ALLOWED_EXTENSIONS = {'zip', 'json', 'xml'}
+ALLOWED_EXTENSIONS = {'zip', 'json', 'xml', 'txt', 'md'}  # Added txt and md
 MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB limit
 
 # Job storage
@@ -162,7 +162,7 @@ def upload():
         file = request.files['file']
         if file.filename:
             if not allowed_file(file.filename):
-                return jsonify({'error': 'Invalid file type. Please upload a ZIP, JSON, or XML file.'}), 400
+                return jsonify({'error': 'Invalid file type. Please upload a ZIP, JSON, XML, TXT, or MD file.'}), 400
             
             # Generate a unique job ID early for the filename
             job_id = str(uuid.uuid4())
