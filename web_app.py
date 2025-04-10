@@ -51,13 +51,13 @@ def clean_old_jobs() -> None:
         except Exception as e:
             logger.error(f"Error cleaning up job {job_id}: {e}")
 
-def process_file(job_id: str, input_file: str) -> None:
+def process_file(job_id: str, input_file: str, api_key: Optional[str] = None) -> None:
     """Process the uploaded file in a background thread"""
     try:
-        # Initialize JournalLM with API key
-        api_key = os.getenv('API_KEY')
+        # Use provided API key or get from environment
+        api_key = api_key or os.getenv('API_KEY')
         if not api_key:
-            raise ValueError("API_KEY environment variable is not set")
+            raise ValueError("API key is required")
         
         journallm = JournalLM(api_key=api_key)
         
@@ -104,11 +104,17 @@ def process_file(job_id: str, input_file: str) -> None:
 @app.route('/')
 def index():
     """Render the main page"""
-    return render_template('index.html')
+    api_key = os.getenv('API_KEY')
+    return render_template('index.html', api_key=api_key)
 
 @app.route('/upload', methods=['POST'])
 def upload():
     """Handle file upload and start processing"""
+    # Get API key from request or environment
+    api_key = request.form.get('api_key') or os.getenv('API_KEY')
+    if not api_key:
+        return jsonify({'error': 'API key is required'}), 400
+    
     # Check if a file was uploaded
     if 'file' not in request.files:
         return jsonify({'error': 'No file uploaded'}), 400
@@ -137,7 +143,7 @@ def upload():
         }
         
         # Start processing in a background thread
-        thread = threading.Thread(target=process_file, args=(job_id, input_file))
+        thread = threading.Thread(target=process_file, args=(job_id, input_file, api_key))
         thread.start()
         
         # Clean up old jobs

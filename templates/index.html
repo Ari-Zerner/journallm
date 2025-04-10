@@ -16,6 +16,20 @@
 
         <div class="row justify-content-center">
             <div class="col-md-8">
+                {% if not api_key %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">API Key Required</h5>
+                        <div class="mb-3">
+                            <label for="api-key" class="form-label">Enter your Anthropic API key:</label>
+                            <input type="password" class="form-control" id="api-key" placeholder="sk-...">
+                            <div class="form-text">Get your API key from <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic Console</a>.</div>
+                            <div class="form-text">Your API key is not stored or used for any purpose other than generating your journal report.</div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Upload Your Journal</h5>

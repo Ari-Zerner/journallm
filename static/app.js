@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressSection = document.getElementById('progress');
     const statusText = document.getElementById('status-text');
     const errorDiv = document.getElementById('error');
+    const apiKeyInput = document.getElementById('api-key');
 
     // Handle drag and drop events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -65,6 +66,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Check if API key is required and provided
+        if (apiKeyInput && !apiKeyInput.value.trim()) {
+            showError('Please enter your API key.');
+            return;
+        }
+
         uploadFile(file);
     }
 
@@ -77,6 +84,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const formData = new FormData();
         formData.append('file', file);
+        if (apiKeyInput) {
+            formData.append('api_key', apiKeyInput.value.trim());
+        }
 
         fetch('/upload', {
             method: 'POST',

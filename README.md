@@ -28,7 +28,9 @@ JournalLM is a Python script that provides personalized insights based on your D
 3. Get an Anthropic API key:
    - Sign up at [Anthropic](https://console.anthropic.com/settings/keys)
    - Create an API key
-4. Create a `.env` file in the project directory with `API_KEY = <your_anthropic_api_key>`
+4. Either:
+   - Create a `.env` file in the project directory with `API_KEY = <your_anthropic_api_key>`, or
+   - When using the web interface, enter your API key directly if one isn't configured in the environment
 
 ### Basic Usage
 
