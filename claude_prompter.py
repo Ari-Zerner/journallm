@@ -18,6 +18,7 @@ def load_prompt(prompt_file: str) -> str:
     with open(prompt_file, 'r') as f:
         return f.read()
 
+MODEL = "claude-3-7-sonnet-20250219"
 SYSTEM_PROMPT = load_prompt('role.prompt.txt')
 REPORT_PROMPT = load_prompt('create_report.prompt.txt')
 
@@ -58,10 +59,21 @@ class ClaudePrompter:
             logger.debug("Sending request to Claude API")
             logger.info("Waiting for Claude's response (this may take a minute)...")
             
+            MAX_JOURNAL_TOKENS = 200000 - 10000 # context window is 200k, leave 10k for prompt and output
+            journal_token_count = self.client.messages.count_tokens(
+                model=MODEL,
+                messages=[{"role": "user", "content": journal}]
+            ).input_tokens
+            if journal_token_count > MAX_JOURNAL_TOKENS:
+                logger.info(f"Journal is too long ({journal_token_count} tokens), truncating oldest entries")
+                truncation_index = int(len(journal) * (1 - MAX_JOURNAL_TOKENS / journal_token_count))
+                journal = '...older entries truncated...\n\n' + journal[truncation_index:]
+                logger.debug(f"Truncated {truncation_index} characters, now {len(journal)} characters")
+                
             report_prompt_content = {"type": "text", "text": REPORT_PROMPT, "cache_control": {"type": "ephemeral"}} if cache_for_interactive else REPORT_PROMPT
             
             response = self.client.messages.create(
-                model="claude-3-7-sonnet-20250219",
+                model=MODEL,
                 system=SYSTEM_PROMPT,
                 messages=[
                     {"role": "user", "content": f"<journal>\n{journal}\n</journal>"},
@@ -112,7 +124,7 @@ class ClaudePrompter:
                 print(f"\nThinking...")
                 
                 response = self.client.messages.create(
-                    model="claude-3-7-sonnet-20250219",
+                    model=MODEL,
                     system=SYSTEM_PROMPT,
                     messages=messages,
                     max_tokens=4000
