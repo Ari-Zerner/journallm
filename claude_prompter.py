@@ -18,7 +18,7 @@ def load_prompt(prompt_file: str) -> str:
     with open(prompt_file, 'r') as f:
         return f.read()
 
-MODEL = "claude-3-7-sonnet-20250219"
+MODEL = "claude-sonnet-4-0"
 SYSTEM_PROMPT = load_prompt('role.prompt.txt')
 REPORT_PROMPT = load_prompt('create_report.prompt.txt')
 
