@@ -59,7 +59,7 @@ class ClaudePrompter:
             logger.debug("Sending request to Claude API")
             logger.info("Waiting for Claude's response (this may take a minute)...")
             
-            MAX_JOURNAL_TOKENS = 200000 - 10000 # context window is 200k, leave 10k for prompt and output
+            MAX_JOURNAL_TOKENS = 200000 - 30000 # context window is 200k, leave 30k buffer
             journal_token_count = self.client.messages.count_tokens(
                 model=MODEL,
                 messages=[{"role": "user", "content": journal}]
