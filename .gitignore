@@ -1,7 +1,26 @@
+# Environment and secrets
 .env
+.env*.local
+token.json
+credentials.json
+
+# Python
 __pycache__
 .venv
-*.json
-*.xml
+
+# Node
+node_modules
+.next/
+out/
+
+# Build artifacts
+*.tsbuildinfo
+.vercel
+
+# Journal exports and generated reports (user data)
+*.zip
 advice-*.md
-token.json
+journal-*.xml
+
+# OS
+.DS_Store
