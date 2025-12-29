@@ -24,3 +24,9 @@ journal-*.xml
 
 # OS
 .DS_Store
+
+# Auto-generated
+next-env.d.ts
+
+# Keep test data
+!test-data/
